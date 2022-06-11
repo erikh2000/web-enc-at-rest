@@ -1,0 +1,24 @@
+{
+  "name": "web-enc-at-rest",
+  "version": "1.0.0",
+  "description": "Encryption-at-Rest for Web Apps Library",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erikh2000/web-enc-at-rest.git"
+  },
+  "keywords": [
+    "encryption-at-rest",
+    "password-based-encryption",
+    "offline-first"
+  ],
+  "author": "Erik Hermansen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/erikh2000/web-enc-at-rest/issues"
+  },
+  "homepage": "https://github.com/erikh2000/web-enc-at-rest#readme"
+}
