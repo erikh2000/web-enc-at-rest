@@ -1,10 +1,17 @@
 {
   "name": "web-enc-at-rest",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Encryption-at-Rest for Web Apps Library",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "clean": "rimraf .nyc_output coverage dist",
+    "clean:modules": "rimraf node_modules package-lock.json && npm install",
+    "test": "mocha --require ts-node/register __tests__/**/*.spec.ts",
+    "test:watch": "mocha --require ts-node/register --watch-extensions ts --watch __tests__/**/*.spec.ts",
+    "test:coverage": "nyc npm test",
+    "lint": "eslint . --ext .js,.ts"
   },
   "repository": {
     "type": "git",
@@ -12,7 +19,12 @@
   },
   "keywords": [
     "encryption-at-rest",
-    "password-based-encryption",
+    "password-based",
+    "password-based cryptography",
+    "password-based encryption",
+    "pbe",
+    "pkcs5",
+    "pkcs#5",
     "offline-first"
   ],
   "author": "Erik Hermansen",
@@ -20,5 +32,36 @@
   "bugs": {
     "url": "https://github.com/erikh2000/web-enc-at-rest/issues"
   },
-  "homepage": "https://github.com/erikh2000/web-enc-at-rest#readme"
+  "homepage": "https://github.com/erikh2000/web-enc-at-rest#readme",
+  "devDependencies": {
+    "@types/chai": "^4.3.1",
+    "@types/mocha": "^9.1.1",
+    "@typescript-eslint/eslint-plugin": "^5.27.1",
+    "@typescript-eslint/parser": "^5.27.1",
+    "chai": "^4.3.6",
+    "eslint": "^8.17.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "husky": "^8.0.1",
+    "mocha": "^10.0.0",
+    "nyc": "^15.1.0",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.8.1",
+    "typescript": "^4.7.3"
+  },
+  "engines": {
+    "node": ">= 16"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
 }
