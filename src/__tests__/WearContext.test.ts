@@ -1,5 +1,4 @@
-import { expect } from 'chai'
-import WearContext from '../src/WearContext';
+import WearContext from '../WearContext';
 
 describe('WearContext', () => {
   describe('constructor()', () => {
@@ -7,14 +6,14 @@ describe('WearContext', () => {
       const credentialKey = {} as CryptoKey;
       const userName = 'bubba';
       const context = new WearContext(credentialKey, userName);
-      expect(context).not.equals(undefined);
+      expect(context).toBeDefined();
     });
 
     it('throws if passed to JSON.stringify()', () => {
       const credentialKey = {} as CryptoKey;
       const userName = 'bubba';
       const context = new WearContext(credentialKey, userName);
-      expect(() => JSON.stringify(context)).throws();
+      expect(() => JSON.stringify(context)).toThrow();
     });
   });
   
@@ -23,7 +22,7 @@ describe('WearContext', () => {
       const credentialKey = {} as CryptoKey;
       const userName = 'bubba';
       const context = new WearContext(credentialKey, userName);
-      expect((context as any).dangerouslyGetCredentialKey()).equals(credentialKey);
+      expect((context as any).dangerouslyGetCredentialKey()).toBe(credentialKey);
     });  
   });
 
@@ -32,7 +31,7 @@ describe('WearContext', () => {
       const credentialKey = {} as CryptoKey;
       const userName = 'bubba';
       const context = new WearContext(credentialKey, userName);
-      expect((context as any).getUserName()).equals(userName);
+      expect((context as any).getUserName()).toEqual(userName);
     });
   });
 
@@ -42,7 +41,7 @@ describe('WearContext', () => {
       const userName = 'bubba';
       const context = new WearContext(credentialKey, userName);
       (context as any).clear();
-      expect((context as any).getUserName()).equals(null);
+      expect((context as any).getUserName()).toBeNull();
     });
 
     it('clears key', () => {
@@ -50,9 +49,8 @@ describe('WearContext', () => {
       const userName = 'bubba';
       const context = new WearContext(credentialKey, userName);
       (context as any).clear();
-      expect((context as any).dangerouslyGetCredentialKey()).equals(null);
+      expect((context as any).dangerouslyGetCredentialKey()).toBeNull();
     });
   });
-
   
 });

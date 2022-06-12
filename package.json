@@ -6,11 +6,10 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "clean": "rm -rf .nyc_output coverage dist",
+    "clean": "rm -rf coverage dist",
     "clean:modules": "rm -rf node_modules package-lock.json && npm install",
-    "test": "mocha --require ts-node/register __tests__/**/*.spec.ts",
-    "test:watch": "mocha --require ts-node/register --watch-extensions ts --watch __tests__/**/*.spec.ts",
-    "test:coverage": "nyc npm test",
+    "test": "jest",
+    "test:coverage": "jest --coverage --collectCoverageFrom=\"./src/**\"",
     "lint": "eslint . --ext .js,.ts"
   },
   "repository": {
@@ -34,14 +33,14 @@
   },
   "homepage": "https://github.com/erikh2000/web-enc-at-rest#readme",
   "devDependencies": {
-    "@types/chai": "^4.3.1",
+    "@babel/preset-env": "^7.18.2",
+    "@babel/preset-typescript": "^7.17.12",
+    "@types/jest": "^28.1.1",
     "@types/mocha": "^9.1.1",
     "@typescript-eslint/eslint-plugin": "^5.27.1",
     "@typescript-eslint/parser": "^5.27.1",
-    "chai": "^4.3.6",
     "eslint": "^8.17.0",
-    "mocha": "^10.0.0",
-    "nyc": "^15.1.0",
+    "jest": "^28.1.1",
     "ts-node": "^10.8.1",
     "typescript": "^4.7.3"
   },
@@ -59,5 +58,13 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "jest": {
+    "collectCoverage": true,
+    "coverageThreshold": {
+      "global": {
+        "lines": 100
+      }
+    }
   }
 }
