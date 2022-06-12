@@ -21,19 +21,24 @@ SOME OPTIONS TO SOLVING THE LOST CREDENTIAL KEY PROBLEM
 
 */
 
-export interface ICredentialKey {
+export const AWARE_OF_DANGER = true;
+
+export interface IWearContext {
   function (key:CryptoKey):void;
 }
 
-function CredentialKey(key:CryptoKey) {
-  let cryptoKey:CryptoKey = key;
+function WearContext(credentialKey:CryptoKey, userName:string) {
   
-  this._getKey = function(awareOfDangers?:boolean):any {
-    if (!awareOfDangers) throw Error('This looks dangerous. See source comments in CredentialKey.ts.');
-    return cryptoKey;
+  this.dangerouslyGetCredentialKey = function():any { return credentialKey; }
+  
+  this.getUserName = function():string { return  userName; }
+  
+  this.clear = function() {
+    credentialKey = null;
+    userName = null;
   }
   
   this._preventSerialization = this; // Did you call JSON.stringify()? That smells like serialization. Please, read warning at top of file.
 }
 
-export default CredentialKey;
+export default WearContext;

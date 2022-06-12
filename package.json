@@ -6,8 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "clean": "rimraf .nyc_output coverage dist",
-    "clean:modules": "rimraf node_modules package-lock.json && npm install",
+    "clean": "rm -rf .nyc_output coverage dist",
+    "clean:modules": "rm -rf node_modules package-lock.json && npm install",
     "test": "mocha --require ts-node/register __tests__/**/*.spec.ts",
     "test:watch": "mocha --require ts-node/register --watch-extensions ts --watch __tests__/**/*.spec.ts",
     "test:coverage": "nyc npm test",
@@ -40,10 +40,8 @@
     "@typescript-eslint/parser": "^5.27.1",
     "chai": "^4.3.6",
     "eslint": "^8.17.0",
-    "husky": "^8.0.1",
     "mocha": "^10.0.0",
     "nyc": "^15.1.0",
-    "rimraf": "^3.0.2",
     "ts-node": "^10.8.1",
     "typescript": "^4.7.3"
   },
