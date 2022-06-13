@@ -9,6 +9,7 @@
     "clean": "rm -rf coverage dist",
     "clean:modules": "rm -rf node_modules package-lock.json && npm install",
     "test": "jest",
+    "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --collectCoverageFrom=\"./src/**\"",
     "lint": "eslint . --ext .js,.ts"
   },
@@ -60,7 +61,6 @@
     ]
   },
   "jest": {
-    "collectCoverage": true,
     "coverageThreshold": {
       "global": {
         "lines": 100

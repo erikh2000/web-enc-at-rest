@@ -48,7 +48,9 @@ describe('WearContext', () => {
       const credentialKey = {} as CryptoKey;
       const userName = 'bubba';
       const context = new WearContext(credentialKey, userName);
+      expect((context as any).isClear()).toBeFalsy();
       (context as any).clear();
+      expect((context as any).isClear()).toBeTruthy();
       expect((context as any).dangerouslyGetCredentialKey()).toBeNull();
     });
   });

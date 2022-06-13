@@ -1,5 +1,5 @@
 import WearContext, { IWearContext } from "./WearContext";
-import {generateCredentialKey} from "./keygen";
+import {generateCredentialKey} from "./keyGen";
 import {decryptAppData, encryptAppData} from "./appDataEncryption";
 
 /* Returns a context that is needed for passing to other APIs or null if passed credentials are incorrect..
@@ -35,6 +35,7 @@ export function lock(context:IWearContext):void {
    @param value          Nearly any JS type should work. The serialization is essentially JSON.stringify().
    @return               Byte array of encrypted data. */
 export async function encrypt(context:IWearContext, value:any):Promise<Uint8Array> {
+  if ((context as any).isClear()) throw Error('Attempted to use context after locking.');
   const credentialKey = (context as any).dangerouslyGetCredentialKey();
   return await encryptAppData(credentialKey, value);
 }
@@ -46,6 +47,7 @@ export async function encrypt(context:IWearContext, value:any):Promise<Uint8Arra
    @param encryptedData  Byte array of encrypted data..
    @return               Unencrypted data. */
 export async function decrypt(context:IWearContext, encryptedData:Uint8Array):Promise<any> {
+  if ((context as any).isClear()) throw Error('Attempted to use context after locking.');
   const credentialKey = (context as any).dangerouslyGetCredentialKey();
   return await decryptAppData(credentialKey, encryptedData);
 }

@@ -1,6 +1,7 @@
 import { getSubtle } from "./protectedCrypto";
-import { randomBytes, stringToBytes } from "./cryptoUtil";
-import { getDeriveKeySalt, setDeriveKeySalt } from "./keygenStore";
+import { randomBytes } from "./randomUtil";
+import { stringToBytes } from "./dataConvertUtil";
+import { getDeriveKeySalt, setDeriveKeySalt } from "./keyGenStore";
 
 function _getOrCreateDeriveKeySalt() {
   let deriveKeySalt = getDeriveKeySalt();

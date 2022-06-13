@@ -30,7 +30,7 @@ export interface IWearContext {
 function WearContext(credentialKey:CryptoKey, userName:string) {
   
   this.dangerouslyGetCredentialKey = function():any { return credentialKey; }
-  
+  this.isClear = function():boolean { return credentialKey === null; }
   this.getUserName = function():string { return  userName; }
   
   this.clear = function() {

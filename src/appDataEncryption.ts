@@ -1,5 +1,6 @@
 import { getSubtle } from './protectedCrypto';
-import { randomBytes, bytesToAny, anyToBytes } from "./cryptoUtil";
+import { randomBytes } from "./randomUtil";
+import { bytesToAny, anyToBytes } from "./dataConvertUtil";
 
 const AES_GCM_IV_LENGTH = 12;
 export async function encryptAppData(credentialKey:CryptoKey, value:any):Promise<Uint8Array> {
@@ -14,10 +15,10 @@ export async function encryptAppData(credentialKey:CryptoKey, value:any):Promise
   return fullMessage;
 }
 
-export async function decryptAppData(credentialKey:CryptoKey, fullMessage:Uint8Array):Promise<any> {
+export async function decryptAppData(credentialKey:CryptoKey, ivPlusEncryptedData:Uint8Array):Promise<any> {
   const subtle = getSubtle();
-  const iv = fullMessage.slice(0, AES_GCM_IV_LENGTH);
-  const cipherText = fullMessage.slice(AES_GCM_IV_LENGTH);
+  const iv = ivPlusEncryptedData.slice(0, AES_GCM_IV_LENGTH);
+  const cipherText = ivPlusEncryptedData.slice(AES_GCM_IV_LENGTH);
 
   const algorithmParams:AesGcmParams = {name: 'AES-GCM', iv};
   const plainText = await subtle.decrypt(algorithmParams, credentialKey, cipherText);
