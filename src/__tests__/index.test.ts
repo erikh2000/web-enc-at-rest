@@ -1,7 +1,7 @@
 import { restoreMock as restoreCryptoMock } from '../__mocks__/mockCrypto';
 import { restoreMock as restoreLocalStorageMock } from '../__mocks__/mockLocalStorage';
 
-import { unlock, lock, encrypt, decrypt }  from '../index'
+import { open, close, encrypt, decrypt }  from '../index'
 import { IWearContext } from "../WearContext";
 import {generateCredentialKey} from "../keyGen";
 import {decryptAppData, encryptAppData} from "../appDataEncryption";
@@ -12,9 +12,9 @@ describe('API', () => {
     restoreLocalStorageMock();
   });
   
-  describe('unlock()', () => {
+  describe('open()', () => {
     it('returns a context', (done) => {
-      unlock('bubba', 'unguessable')
+      open('bubba', 'unguessable')
       .then((context:IWearContext) => {
         expect(context).toBeDefined();
         done();
@@ -22,12 +22,12 @@ describe('API', () => {
     });
   });
 
-  describe('lock()', () => {
+  describe('close()', () => {
     it('clears passed-in context', (done) => {
-      unlock('bubba', 'unguessable')
+      open('bubba', 'unguessable')
       .then((context:IWearContext) => {
         expect((context as any).isClear()).toBeFalsy();
-        lock(context);
+        close(context);
         expect((context as any).isClear()).toBeTruthy();
         done();
       });
@@ -38,7 +38,7 @@ describe('API', () => {
     let context:IWearContext = null;
     
     beforeEach((done) => {
-      unlock('bubba', 'unguessable')
+      open('bubba', 'unguessable')
       .then((newContext:IWearContext) => {
         context = newContext;
         done();
@@ -58,7 +58,7 @@ describe('API', () => {
 
     it('throws if context has been cleared', (done) => {
       const value = { a:3, b:['apple', 95], c:{x:85} };
-      lock(context);
+      close(context);
       encrypt(context, value)
       .then(() => {
         expect(true).toBeFalsy();
@@ -72,7 +72,7 @@ describe('API', () => {
     let context:IWearContext = null;
 
     beforeEach((done) => {
-      unlock('bubba', 'unguessable')
+      open('bubba', 'unguessable')
         .then((newContext:IWearContext) => {
           context = newContext;
           done();
@@ -81,7 +81,7 @@ describe('API', () => {
 
     it('throws if context has been cleared', (done) => {
       const data = new Uint8Array(100);
-      lock(context);
+      close(context);
       decrypt(context, data)
         .then(() => {
           expect(true).toBeFalsy();

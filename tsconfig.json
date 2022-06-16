@@ -1,11 +1,19 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "lib": ["ES2017", "dom"],
-    "target": "es5",
+    "baseUrl": "./src",
     "declaration": true,
-    "outDir": "./dist"
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "lib": ["ES2017", "dom"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noFallthroughCasesInSwitch": true,
+    "outDir": "./dist",
+    "resolveJsonModule": true,
+    "strict": true,
+    "target": "ES2015",
   },
+  "compileOnSave": true,
   "include": [
     "src/**/*"
   ]
