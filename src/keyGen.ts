@@ -5,7 +5,6 @@ import {getCredentialHash, getDeriveKeySalt, setCredentialHash, setDeriveKeySalt
 import {areUint8ArraysEqual} from "./arrayUtil";
 
 const PBKDF2_SALT_BYTE_LENGTH = 16;
-export const DERIVE_KEY_SALT_BYTE_LENGTH = PBKDF2_SALT_BYTE_LENGTH;
 export function getOrCreateDeriveKeySalt():Uint8Array {
   let deriveKeySalt = getDeriveKeySalt();
   if (!deriveKeySalt) {
@@ -20,9 +19,8 @@ function _concatPassphraseFromCredentials(userName:string, password:string):stri
 }
 
 const DERIVE_KEY_ITERATIONS = 1000000;
-export async function generateCredentialKey(userName:string, password:string):Promise<Uint8Array> {
+async function _generateCredentialKeyBytes(subtle:any, userName:string, password:string):Promise<Uint8Array> {
   const passphrase = _concatPassphraseFromCredentials(userName, password);
-  const subtle = getSubtle();
   const salt = getOrCreateDeriveKeySalt();
   const passphraseUint8:Uint8Array = stringToBytes(passphrase);
   const algorithmParams:Pbkdf2Params = { name: 'PBKDF2', hash: 'SHA-256', salt, iterations:DERIVE_KEY_ITERATIONS };
@@ -32,9 +30,10 @@ export async function generateCredentialKey(userName:string, password:string):Pr
   return new Uint8Array(await subtle.exportKey('raw', credentialKey));
 }
 
-export function generateRandomKey():Uint8Array {
-  const AES_GCM_KEY_BYTE_LENGTH = 8;
-  return randomBytes(AES_GCM_KEY_BYTE_LENGTH);
+export async function generateCredentialKey(userName:string, password:string):Promise<CryptoKey> {
+  const subtle = getSubtle();
+  const keyBytes = await _generateCredentialKeyBytes(subtle, userName, password);
+  return await subtle.importKey('raw', keyBytes, 'AES-GCM', false, ['decrypt', 'encrypt']);
 }
 
 const CREDENTIAL_HASH_BYTE_LENGTH = 64;

@@ -2,9 +2,7 @@ import { restoreMock as restoreCryptoMock } from '../__mocks__/mockCrypto';
 import { restoreMock as restoreLocalStorageMock } from '../__mocks__/mockLocalStorage';
 
 import { open, close, encrypt, decrypt }  from '../index'
-import { IWearContext } from "../WearContext";
-import {generateCredentialKey} from "../keyGen";
-import {decryptAppData, encryptAppData} from "../appDataEncryption";
+import WearContext from "../WearContext";
 
 describe('API', () => {
   beforeEach(() => {
@@ -15,7 +13,7 @@ describe('API', () => {
   describe('open()', () => {
     it('returns a context', (done) => {
       open('bubba', 'unguessable')
-      .then((context:IWearContext) => {
+      .then((context:WearContext|null) => {
         expect(context).toBeDefined();
         done();
       });
@@ -23,32 +21,35 @@ describe('API', () => {
   });
 
   describe('close()', () => {
-    xit('clears passed-in context', (done) => {
+    it('clears passed-in context', (done) => {
       open('bubba', 'unguessable')
-      .then((context:IWearContext) => {
-        expect((context as any).isClear()).toBeFalsy();
+      .then((context:WearContext|null) => {
+        if(!context) { done(); return; }
+        expect(context.isClear()).toBeFalsy();
         close(context);
-        expect((context as any).isClear()).toBeTruthy();
+        expect(context.isClear()).toBeTruthy();
         done();
       });
     });
   });
   
   describe('encrypt()', () => {
-    let context:IWearContext = null;
+    let context:WearContext|null = null;
     
     beforeEach((done) => {
       open('bubba', 'unguessable')
-      .then((newContext:IWearContext) => {
+      .then((newContext:WearContext|null) => {
         context = newContext;
         done();
       });
     });
 
-    xit('encrypts data that matches original value after decryption', (done) => {
+    it('encrypts data that matches original value after decryption', (done) => {
       const value = { a:3, b:['apple', 95], c:{x:85} };
+      if(!context) { done(); return; }
       encrypt(context, value)
       .then((cipherText:Uint8Array) => {
+        if(!context) { done(); return; }
         return decrypt(context, cipherText);
       }).then((plaintext:any) => {
         expect(plaintext).toStrictEqual(value);
@@ -56,8 +57,9 @@ describe('API', () => {
       });
     });
 
-    xit('throws if context has been cleared', (done) => {
+    it('throws if context has been cleared', (done) => {
       const value = { a:3, b:['apple', 95], c:{x:85} };
+      if(!context) { done(); return; }
       close(context);
       encrypt(context, value)
       .then(() => {
@@ -69,18 +71,19 @@ describe('API', () => {
   });
 
   describe('decrypt()', () => {
-    let context:IWearContext = null;
+    let context:WearContext|null = null;
 
     beforeEach((done) => {
       open('bubba', 'unguessable')
-        .then((newContext:IWearContext) => {
+        .then((newContext:WearContext|null) => {
           context = newContext;
           done();
         });
     });
 
-    xit('throws if context has been cleared', (done) => {
+    it('throws if context has been cleared', (done) => {
       const data = new Uint8Array(100);
+      if(!context) { done(); return; }
       close(context);
       decrypt(context, data)
         .then(() => {

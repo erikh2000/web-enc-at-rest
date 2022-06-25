@@ -2,6 +2,7 @@ const trusted = {
   decrypt: global.crypto?.subtle?.decrypt,
   deriveKey: global.crypto?.subtle?.deriveKey,
   encrypt: global.crypto?.subtle?.encrypt,
+  exportKey: global.crypto?.subtle?.exportKey,
   importKey: global.crypto?.subtle?.importKey,
   getRandomValues: global.crypto?.getRandomValues
 };
@@ -20,6 +21,7 @@ export function findTampering():boolean {
     global.crypto?.subtle?.deriveKey !== trusted.deriveKey ||
     global.crypto?.subtle?.encrypt !== trusted.encrypt ||
     global.crypto?.subtle?.importKey !== trusted.importKey ||
+    global.crypto?.subtle?.exportKey !== trusted.exportKey ||
     global.crypto?.getRandomValues !== trusted.getRandomValues;
 }
 

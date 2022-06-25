@@ -18,6 +18,12 @@ async function deriveKey(algorithm:Pbkdf2Params, baseKey:CryptoKey, derivedKeyTy
 async function encrypt(algorithmParams:AesGcmParams, key:CryptoKey, data:ArrayBuffer):Promise<ArrayBuffer> {
   return subtle.encrypt(algorithmParams, key, data);
 }
+
+async function exportKey(format:string, keyData:BufferSource, algorithm:string, extractable:boolean,
+                         keyUsages:string[]):Promise<CryptoKey> {
+  return subtle.exportKey(format, keyData, algorithm, extractable, keyUsages);
+}
+
 async function importKey(format:string, keyData:BufferSource, algorithm:string, extractable:boolean, 
                    keyUsages:string[]):Promise<CryptoKey> { 
   return subtle.importKey(format, keyData, algorithm, extractable, keyUsages);
@@ -30,6 +36,7 @@ function _mock() {
       decrypt,
       deriveKey,
       encrypt,
+      exportKey,
       importKey
     }
   };

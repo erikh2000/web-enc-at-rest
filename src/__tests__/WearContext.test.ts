@@ -4,15 +4,13 @@ describe('WearContext', () => {
   describe('constructor()', () => {
     it('constructs', () => {
       const credentialKey = {} as CryptoKey;
-      const userName = 'bubba';
-      const context = new WearContext(credentialKey, userName);
+      const context = new WearContext(credentialKey);
       expect(context).toBeDefined();
     });
 
     it('throws if passed to JSON.stringify()', () => {
       const credentialKey = {} as CryptoKey;
-      const userName = 'bubba';
-      const context = new WearContext(credentialKey, userName);
+      const context = new WearContext(credentialKey);
       expect(() => JSON.stringify(context)).toThrow();
     });
   });
@@ -20,38 +18,19 @@ describe('WearContext', () => {
   describe('dangerouslyGetCredentialKey()', () => {
     it('returns passed-in key', () => {
       const credentialKey = {} as CryptoKey;
-      const userName = 'bubba';
-      const context = new WearContext(credentialKey, userName);
-      expect((context as any).dangerouslyGetCredentialKey()).toBe(credentialKey);
+      const context = new WearContext(credentialKey);
+      expect(context.dangerouslyGetKey()).toBe(credentialKey);
     });  
   });
 
-  describe('getUserName()', () => {
-    it('returns passed-in user name', () => {
-      const credentialKey = {} as CryptoKey;
-      const userName = 'bubba';
-      const context = new WearContext(credentialKey, userName);
-      expect((context as any).getUserName()).toEqual(userName);
-    });
-  });
-
   describe('clear()', () => {
-    it('clears user name', () => {
-      const credentialKey = {} as CryptoKey;
-      const userName = 'bubba';
-      const context = new WearContext(credentialKey, userName);
-      (context as any).clear();
-      expect((context as any).getUserName()).toBeNull();
-    });
-
     it('clears key', () => {
       const credentialKey = {} as CryptoKey;
-      const userName = 'bubba';
-      const context = new WearContext(credentialKey, userName);
-      expect((context as any).isClear()).toBeFalsy();
-      (context as any).clear();
+      const context = new WearContext(credentialKey);
+      expect(context.isClear()).toBeFalsy();
+      context.clear();
       expect((context as any).isClear()).toBeTruthy();
-      expect((context as any).dangerouslyGetCredentialKey()).toBeNull();
+      expect(context.dangerouslyGetKey()).toBeNull();
     });
   });
   
