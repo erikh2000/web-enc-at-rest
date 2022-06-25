@@ -1,4 +1,4 @@
-# Web Encryption-at-Rest (WEaR)
+# Web Encryption at Rest (WEaR)
 
 This library has a small set of features to support encryption-at-rest in web apps. Encryption-at-rest for a web app means that sensitive app data is encrypted before it is written to disk or other persistent storage. And when your web app needs to use that same data, it is decrypted and kept in memory.
 
@@ -6,17 +6,17 @@ WEaR's API is decidedly *just* a library rather than a framework. How you store 
 
 WEaR can also be used as an offline-only means of authentication for a single user on one browser. So if you want to authenticate users before allowing access to sensitive data without relying on an authentication web service, WeAR may be a good solution.
 
-WARNING: This library is in a period of peer review. I do not recommend it for production use until the peer review has completed, at which point, I will remove this warning. For more information, see "Peer Review Status" below.
+WARNING: This library is in a period of peer review. I do not recommend it for production use until the peer review has completed, at which point, I will remove this warning and set the package version number to 1.*.
 
 ## Design and Maintenance Goals
 
 * _Low-risk_
-  * Does not invent new algorithms or protocols, but rather adapts PKCS #5 (recommendations for password-based encryption) to web-encryption-at-rest use cases.
-  * Does not aim to grow into a large codebase with many contributors. Small is good for crypto.
-  * APIs are designed to limit opportunities for misuse.
-  * 100% test coverage with integration tests that use cryptographic functionality rather than mocks.
-  * Zero run-time dependencies (other than the browser-provided native APIs) to reduces risk of supply-chain attacks
-  * Tamper check on Web Crypto functions further lowers risk of supply-chain attacks.
+  * Does not invent new algorithms or protocols, but rather adapts PKCS #5 (recommendations for password-based encryption) to web-encryption-at-rest use cases
+  * Does not aim to grow into a large codebase with many contributors
+  * APIs are designed to limit opportunities for misuse
+  * 100% test coverage with integration tests that use cryptographic functionality rather than mocks
+  * Zero run-time dependencies (other than the browser-provided native APIs) to reduce risk of supply-chain attacks
+  * Tamper check on Web Crypto functions further lowers risk of supply-chain attacks
 * _Lightweight_
   * Features are minimal to what is needed for encryption-at-rest use cases. You can build beyond this within your app
   * Any features beyond the above will be offered in separate, optional NPM packages
@@ -28,24 +28,52 @@ WARNING: This library is in a period of peer review. I do not recommend it for p
 
 Performance is a consideration, but any potential improvement to performance that compromises the primary goals above will be rejected.
 
-## Peer Review Status
-
-With cryptography, it's fairly easy to make mistakes in implementation. I've put time into research, stuck to standards, and avoided inventing new protocols, primitives, or algorithms. So my humble solution has a good chance of being free of vulnerabilities.
-
-But I want to get more eyes on the project. When I feel reasonably confident of my implementation, I'll set the NPM package version to 1.x, remove the "not for production use" console warnings, and update this README to reflect a "ready" status.
-
-I am appreciative of well-considered and specific criticism of the project. You can file an issue on Github ( https://github.com/erikh2000/web-enc-at-rest/issues ).
-
 ## Usage
 
 All the APIs are found in /src/index.ts with documentation around their usage. But I'll describe the use cases your web app will need to support for encryption-at-rest and how to handle them.
 
-### Logging In
+### Quick Example
 
-When the user provides credentials to log in to your app, call `open()` passing the username and password. You can include this call in your already-existing login flow, or if you are creating a web app that does not authenticate against a web service, the call to `open()` can serve as a local-only authentication. `open()` will return a context instance that can be passed to the other APIs.
+The code below shows a minimal set of code to request credentials from a user, read in some encrypted data, and update changed data. In an effort to be self-contained and simple, it uses 1990's-style browser prompts to collect user data and the storage-limited LocalStorage API. But WEaR is agnostic to UI and persistent storage choices, and you can implement differently.
 
 ```javascript
-  import { open } from 'web-enc-at-rest'
+  import { isInitialized, open, encrypt, decrypt } from 'web-enc-at-rest';
+
+  function promptForCredentials(isNewAccount) {
+    const activity = isNewAccount ? 'Creating New Account' : 'Logging In';
+    const userName = prompt(activity, 'user name');
+    const password = prompt(activity, 'password');
+    return { userName, password };
+  }  
+  
+  async function updateYourSensitiveData() {
+    const isNewAccount = !isInitialized();
+    const { userName, password } = promptForCredentials(isNewAccount);
+    const context = open(userName, password);
+    
+    const currentEncryptedData = localStorage.getItem('YOUR_SENSITIVE_DATA') ?? '';
+    const currentData = await decrypt(context, encryptedSensitiveData);
+    const updatedData = prompt('Update sensitive data:', sensitiveData);
+    if (updatedData !== currentData) {
+      const updatedEncryptedData = await encrypt(context, updatedData);
+      localStorage.setItem('YOUR_SENSITIVE_DATA', updatedEncryptedData);
+    }
+    close(context);
+  }
+  
+  updateYourSensitiveData();
+```
+
+Another unnatural aspect of the previous code example is how all the calls to WEaR APIs are together. You'd more likely call `open()` around a login UI, and then immediately load all encrypted data into an in-memory store with multiple calls to `decrypt()`. Then later when a user changes data within the app, pass the changed data to `encrypt()` and write the new encrypted value to persistent storage. Finally, when the user logs out, call `close()` on the context returned earlier to increase security on the user's workstation.
+
+Each of these use cases and more will be explained below.
+
+### Creating an Account
+
+When the user provides initial credentials to create their account, call `open()` passing the username and password. You can include this call in your already-existing account creation flow. Or, if you are creating a web app that doesn't authenticate against a web service, the call to `open()` can serve to initialize local-only authentication. `open()` will return a context instance that can be passed to other APIs.
+
+```javascript
+  import { open } from 'web-enc-at-rest';
   ...
   const context = await open(userName, password);
   // Store the context in memory for use during the session.
@@ -53,12 +81,36 @@ When the user provides credentials to log in to your app, call `open()` passing 
 
 IMPORTANT: You must never store the context instance or its contents in anything but memory. Storing it in cookies, localStorage, sessionStorage, querystring params, IndexedDb or any form of persistent storage will compromise the security of your user's data.
 
+### Logging In
+
+When the user provides credentials to log in to your app, call `open()` passing the username and password. You can include this call in your already-existing login flow, or if you are creating a web app that does not authenticate against a web service, the call to `open()` can serve as a local-only authentication. `open()` will return a context instance that can be passed to the other APIs.
+
+```javascript
+  import { open } from 'web-enc-at-rest';
+  ...
+  const context = await open(userName, password);
+  // Store the context in memory for use during the session.
+```
+
+You might have noticed that the code for creating a new account or logging in is exactly the same. `open()` will initialize for new credentials or confirm against existing credentials as appropriate. Your app may want to show different UI for creating a new account versus logging in. You can check which state applies with code that calls `isInitialized()`.
+
+```javascript
+  import { isInitialized } from 'web-enc-at-rest';
+  ...
+  if (isInitialized()) {
+    console.log('Authenticating against previously provided credentials.');
+  } else {
+    console.log('Initializing with newly provided credentials.');
+  }
+  const context = open(userName, password);
+```
+
 ### Logging Out
 
 When the user logs out, call `close()` on the context instance to prevent an attacker with physical access to an unattended and unlocked device from accessing encrypted data. If the user closes your web app's tab or the browser before you call `close()`, it's fine because the sensitive data will have been removed from memory by the browser.
 
 ```javascript
-  import { close } from 'web-enc-at-rest'
+  import { close } from 'web-enc-at-rest';
   ...
   close(context);
 ```
@@ -89,24 +141,33 @@ When your web app needs to retrieve and use encrypted data from persistent stora
 
 ### Changing Password or Username
 
-You have to re-encrypt your app data with the new password. You'll call `decrypt()` on all of the app data using a context instance returned from the `open()` where the current credentials were passed. Then call `open()` again with the new credentials (changed username and/or password). With the second context instance, call `encrypt()` on all the app data and store it.
+You need to re-encrypt your app data with the new password. To do this, you write a re-encryption function that reads all of your encrypted data from persistent storage, and rewrites it back, encrypted using the new credentials. Pass this function to `changeCredentialsAndReEncrypt()` and it will handle the changes in an atomic way to avoid bricking user data.
 
 ```javascript
-  import { open, encrypt, decrypt } from 'web-enc-at-rest';
-
+  import { changeCredentialsAndReEncrypt } from 'web-enc-at-rest';
   ...
-  const encryptedInvoice = localStorage.getItem('lastInvoice');
-  const invoice = await decrypt(context, encryptedInvoice);
-  const newContext = await open(userName, newPassword);
-  const reencryptedInvoice = await encrypt(context, newContext);
-  localStorage.getItem('lastInvoice', reencryptedInvoice);
+
+  async function onReEncrypt(reEncryptor) {
+    try {
+      const encryptedInvoice = localStorage.getItem('lastInvoice');
+      const reEncryptedInvoice = await reEncryptor(encryptedInvoice);
+      localStorage.setItem('lastInvoice', reEncryptedInvoice);    
+      return true;
+    } catch(e) {
+      console.error(e);
+      return false;
+    }
+  }
+  
+  ...
+  context = await changeCredentialsAndReEncrypt(context, newUserName, newPassword, onReEncrypt); 
+  
 ```
 
-You have to do this re-encryption for the user to continue accessing it after their credentials changed. There are some alternative architectures you can pursue that add safeguarding by storing context information on a server.
 
-### Protecting against Supply Chain Attacks
+### Protecting Against Supply Chain Attacks
 
-There is a supply chain attack where some code in an imported dependency or transitive dependency can swap out built-in functions in the JS execution environment. To protect against this, you can import WEaR before any other imports. 
+There is a supply chain attack where some code in an imported dependency or transitive dependency can swap out built-in functions in the JS execution environment. To protect against this, you can import WEaR before any other imports. Put the import ahead of all others, or as close to first as you can manage. When the module imports, it takes a snapshot of "trusted" functions to compare against later for tampering. You want that snapshot to happen before a malicious 3rd-party module changes the functions.
 
 ```javascript
   import 'web-enc-at-rest'; // This import should precede all others.
@@ -119,4 +180,63 @@ This will not protect against every possible supply chain attack. Some other pre
 * address vulnerabilities with `npm audit`.
 * put your build-time-only dependencies (test frameworks, linting, etc.) under `devDependencies` in `package.json`, so that `npm audit` will be more meaningful when it complains about vulnerabilities under the `dependencies` section.
 * minimize your use of dependencies
-* configure your production web server with CSP directives to disallow all cross-domain service requests regardless of CORS allowances on the external server. This nearly guarantees that malicious code running from within the browser can't send user data to an attacker's server. 
+* configure your production web server with CSP directives to disallow all cross-domain service requests regardless of CORS allowances on the external server. This nearly guarantees that malicious code running from within the browser can't send user data to an attacker's server.
+
+### Protecting Against User Data Loss
+
+You want some way to deal with losing key generation data which is accessed via localStorage or app data which is accessed according to your implementation. What can cause this?
+
+* The user chooses an action like "Clear Browser History" that clears localStorage.
+* The user's system is low on disk space in a way that initiates data eviction.
+* Something more anomalous, e.g. disk corruption, bad file system writes, bug in browser updating, malware.
+
+There's basically two solutions:
+
+* Just accept the data loss and start over with new data. OR...
+* Use an online backup and restore from it.
+
+Accepting the data loss is the easiest thing, of course. You'll have to decide if it will work for users of your app.
+
+### One-User/Multiple-Devices and Remote Credentials Not Yet Supported
+
+If a user initializes WEaR with their credentials from one browser, and then uses your app on a different browser, this library doesn't provide any facility to recreate the initialization on the second browser. This limitation causes some use cases like changing credentials or synchronizing app data between devices to fail. I'm interested in adding features to support these use cases, but they aren't here yet.
+
+If you want to forge ahead, I'll give you a few ideas on how you can handle these use cases.
+
+1. Generate the key from a random number generator instead of from credentials. The random number generator be cryptographically secure.
+2. Store the key on a remote server tied to a user account.
+3. When the user logs in with an auth web service, fetch the key from the remote server, e.g. return in the auth web service response.
+
+By decoupling the key from credentials, a single key can be used from multiple devices, and changing credentials won't require re-encrypting data. However, you will have another attack vector to defend against - a breach of your remote server would give an attacker keys that can be used to decrypt data. And it won't be possible to authenticate users without being online.
+
+Here's another approach to multiple-device encryption-at-rest:
+
+1. Authenticate the user against a web service.
+2. If the web service auth succeeds, but the call to `open()` with same credentials fails, then:
+  1. Call `dangerouslyDeInitialize()` and make a second call to `open()`, which will now succeed. Your encrypted app data is now bricked.
+  2. Fetch all sensitive data from web services. It will be in plaintext.
+  3. Encrypt the sensitive data and overwrite it in browser persistent storage.
+
+### Contributing to Project
+
+I am interested in working with other people, but not in the typical way that open source projects do. Progress on this library will be slow and cautious, supported by thorough design. There's such a high bar to making changes, that I think it would be frustrating for both myself and contributors to work through PRs. So this project just doesn't seem to be the kind where I should accept PRs from the coding public.
+
+Here are the kinds of contributions I am seeking, if you are gracious enough to offer them:
+* Well-considered criticism of the code, particularly if it helps to prevent security vulnerabilities.
+* Bug reports.
+* Feature requests. (I am very much inclined to keep this core package minimal, but I'm planning add-on packages.)
+
+The above items can all be entered via Github issues for the project.
+
+### Limited Offer - Free Consulting Sessions for Using WEaR in Your Project
+
+I want to know about how people are using WEaR in their projects as a means to improving the library. And you might get a few shortcuts to understanding and using it well in your project by talking to me. So maybe it would work out well for both of us to have a call over Zoom or Discord for a half hour. If you are interested in this, see contact info below for reaching me.
+
+I don't know how long I'll be doing these sessions. But if you see this message in the README, I'm probably still doing them.
+
+### Contact Info
+
+Here is my LinkedIn profile. 
+https://www.linkedin.com/in/erikhermansen/
+
+I generally accept connections on LinkedIn from strangers. Just don't pitch me on a product or service. And it helps my mental sorting if you mention you have an interest in WEaR.

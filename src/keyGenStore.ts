@@ -9,7 +9,11 @@ export function getDeriveKeySalt():Uint8Array|null {
   return value === null ? null : stringToBytes(value);
 }
 
-export function setDeriveKeySalt(deriveKeySalt:Uint8Array) {
+export function setDeriveKeySalt(deriveKeySalt:Uint8Array|null) {
+  if (deriveKeySalt === null) {
+    global.localStorage.removeItem(DERIVE_KEY_SALT);
+    return;
+  }
   global.localStorage.setItem(DERIVE_KEY_SALT, bytesToString(deriveKeySalt));
 }
 
@@ -18,6 +22,10 @@ export function getCredentialHash():Uint8Array|null {
   return value === null ? null : stringToBytes(value);
 }
 
-export function setCredentialHash(credentialHash:Uint8Array) {
+export function setCredentialHash(credentialHash:Uint8Array|null) {
+  if (credentialHash === null) {
+    global.localStorage.removeItem(CREDENTIAL_HASH);
+    return;
+  }
   global.localStorage.setItem(CREDENTIAL_HASH, bytesToString(credentialHash));
 }

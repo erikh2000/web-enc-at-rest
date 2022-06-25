@@ -31,9 +31,12 @@ function _reviver(key:string, value:string):any {
   return value;
 }
 
+export function anyToString(value:any):string {
+  return JSON.stringify(value, _replacer);
+}
+
 export function anyToBytes(value:any):Uint8Array {
-  const text = JSON.stringify(value, _replacer);
-  return stringToBytes(text);
+  return stringToBytes(anyToString(value));
 }
 
 export function bytesToAny(utf8Array:Uint8Array):any {

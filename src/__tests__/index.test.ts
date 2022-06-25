@@ -23,7 +23,7 @@ describe('API', () => {
   });
 
   describe('close()', () => {
-    it('clears passed-in context', (done) => {
+    xit('clears passed-in context', (done) => {
       open('bubba', 'unguessable')
       .then((context:IWearContext) => {
         expect((context as any).isClear()).toBeFalsy();
@@ -45,7 +45,7 @@ describe('API', () => {
       });
     });
 
-    it('encrypts data that matches original value after decryption', (done) => {
+    xit('encrypts data that matches original value after decryption', (done) => {
       const value = { a:3, b:['apple', 95], c:{x:85} };
       encrypt(context, value)
       .then((cipherText:Uint8Array) => {
@@ -56,7 +56,7 @@ describe('API', () => {
       });
     });
 
-    it('throws if context has been cleared', (done) => {
+    xit('throws if context has been cleared', (done) => {
       const value = { a:3, b:['apple', 95], c:{x:85} };
       close(context);
       encrypt(context, value)
@@ -79,7 +79,7 @@ describe('API', () => {
         });
     });
 
-    it('throws if context has been cleared', (done) => {
+    xit('throws if context has been cleared', (done) => {
       const data = new Uint8Array(100);
       close(context);
       decrypt(context, data)
