@@ -2,7 +2,6 @@ import {generateCredentialHash, generateCredentialKey, matchOrCreateCredentialHa
 import {decryptAppData, encryptAppData} from "./appDataEncryption";
 import {getCredentialHash, setCredentialHash, setDeriveKeySalt} from "./keyGenStore";
 import WearContext from "./WearContext";
-import {bytesToString} from "./dataConvertUtil";
 
 /** Checks to see if a context was previously opened via open(). This can be useful
     to present appropriate UI in the app for either request existing credentials (e.g. "log in") or 
@@ -76,11 +75,7 @@ export async function changeCredentialsAndReEncrypt(oldContext:WearContext, newU
   if (!await onReEncrypt(_reEncrypt)) throw Error('Re-encryption failed. The current context has not been changed.');  
   
   oldContext.clear();
-  console.log('changeCreden!!1');
-  console.log({newCredentialHash});
   setCredentialHash(newCredentialHash);
-  const retrieved = getCredentialHash(); // DELETE
-  console.log({retrieved});
   return newContext;
 }
 
@@ -94,11 +89,7 @@ export async function changeCredentialsAndReEncrypt(oldContext:WearContext, newU
     @returns             Promise resolving to context that can be passed to other APIs. Treat this opaquely. 
                          DO NOT store in any place but memory. */
 export async function open(userName:string, password:string):Promise<WearContext | null> {
-  console.log('!!1 for ' + userName + ' / ' + password);
   const credentialHash = await generateCredentialHash(userName, password);
-  console.log({credentialHash});
-  const existing:Uint8Array = getCredentialHash() ?? new Uint8Array([]);
-  console.log({existing});
   if (!matchOrCreateCredentialHash(credentialHash)) return null;
   const credentialKeyBytes = await generateCredentialKey(userName, password);
   return new WearContext(credentialKeyBytes);
@@ -123,8 +114,7 @@ export function close(context:WearContext):void {
     @return               Promise resolving to Byte array of encrypted data. */
 export async function encrypt(context:WearContext, value:any):Promise<Uint8Array> {
   if (context.isClear()) throw Error('Attempted to use a closed context.');
-  const credentialKey = await context.dangerouslyGetKey();
-  if (!credentialKey) throw Error('Unexpected');
+  const credentialKey = (await context.dangerouslyGetKey()) as CryptoKey;
   return await encryptAppData(credentialKey, value);
 }
 
@@ -136,7 +126,6 @@ export async function encrypt(context:WearContext, value:any):Promise<Uint8Array
     @return               Promise resolving to Unencrypted data. */
 export async function decrypt(context:WearContext, encryptedData:Uint8Array):Promise<any> {
   if ((context as any).isClear()) throw Error('Attempted to use a closed context.');
-  const credentialKey = await context.dangerouslyGetKey();
-  if (!credentialKey) throw Error('Unexpected');
+  const credentialKey = (await context.dangerouslyGetKey()) as CryptoKey;
   return await decryptAppData(credentialKey, encryptedData);
 }

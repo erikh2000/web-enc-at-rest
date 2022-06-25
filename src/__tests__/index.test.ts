@@ -90,22 +90,21 @@ describe('API', () => {
   });
   
   describe('encrypt()', () => {
-    let context:WearContext|null = null;
+    let context:WearContext;
     
     beforeEach((done) => {
       open('bubba', 'unguessable')
       .then((newContext:WearContext|null) => {
-        context = newContext;
+        if (!newContext) throw Error('Unexpected');
+        context = newContext as WearContext;
         done();
       });
     });
 
     it('encrypts data that matches original value after decryption', (done) => {
       const value = { a:3, b:['apple', 95], c:{x:85} };
-      if(!context) { done(); return; }
       encrypt(context, value)
       .then((cipherText:Uint8Array) => {
-        if(!context) { done(); return; }
         return decrypt(context, cipherText);
       }).then((plaintext:any) => {
         expect(plaintext).toStrictEqual(value);
@@ -115,7 +114,6 @@ describe('API', () => {
 
     it('throws if context has been cleared', (done) => {
       const value = { a:3, b:['apple', 95], c:{x:85} };
-      if(!context) { done(); return; }
       close(context);
       encrypt(context, value)
       .then(() => {
@@ -276,7 +274,7 @@ describe('API', () => {
       });
     });
 
-    fit('causes new credentials to open after successful return', (done) => {
+    it('causes new credentials to open after successful return', (done) => {
       async function onReEncrypt(reEncryptor:IReEncryptFunction):Promise<boolean> { return true; }
       changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then((newContext:WearContext) => {
         return open(NEW_USERNAME, NEW_PW);

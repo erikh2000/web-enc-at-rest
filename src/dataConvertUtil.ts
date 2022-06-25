@@ -36,6 +36,7 @@ export function anyToString(value:any):string {
 }
 
 export function anyToBytes(value:any):Uint8Array {
+  const text = anyToString(value);
   return stringToBytes(anyToString(value));
 }
 

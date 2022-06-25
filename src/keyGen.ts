@@ -45,15 +45,10 @@ export async function generateCredentialHash(userName:string, password:string):P
 }
 
 export function matchOrCreateCredentialHash(credentialHash:Uint8Array):boolean {
-  console.log('match!!1');
   const against = getCredentialHash();
   if (against === null) {
-    console.log('match!!2');
     setCredentialHash(credentialHash);
     return true;
   }
-  console.log('match!!3');
-  const result = areUint8ArraysEqual(credentialHash, against);
-  console.log('match!!4 result=' + result);
-  return result;
+  return areUint8ArraysEqual(credentialHash, against);
 }
