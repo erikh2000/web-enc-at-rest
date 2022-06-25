@@ -18,7 +18,7 @@ function _concatPassphraseFromCredentials(userName:string, password:string):stri
   return `${userName}\u0000${password}`;
 }
 
-const DERIVE_KEY_ITERATIONS = 1000000;
+const DERIVE_KEY_ITERATIONS = 100000;
 async function _generateCredentialKeyBytes(subtle:any, userName:string, password:string):Promise<Uint8Array> {
   const passphrase = _concatPassphraseFromCredentials(userName, password);
   const salt = getOrCreateDeriveKeySalt();
@@ -36,18 +36,24 @@ export async function generateCredentialKey(userName:string, password:string):Pr
   return await subtle.importKey('raw', keyBytes, 'AES-GCM', false, ['decrypt', 'encrypt']);
 }
 
-const CREDENTIAL_HASH_BYTE_LENGTH = 64;
 export async function generateCredentialHash(userName:string, password:string):Promise<Uint8Array> {
-  // TODO
+  const subtle = getSubtle();
   const passphrase = _concatPassphraseFromCredentials(userName, password);
-  return new Uint8Array(CREDENTIAL_HASH_BYTE_LENGTH);
+  const passphraseBytes = stringToBytes(passphrase);
+  const digestBuffer:ArrayBuffer = await subtle.digest('SHA-256', passphraseBytes);
+  return new Uint8Array(digestBuffer);
 }
 
 export function matchOrCreateCredentialHash(credentialHash:Uint8Array):boolean {
+  console.log('match!!1');
   const against = getCredentialHash();
   if (against === null) {
+    console.log('match!!2');
     setCredentialHash(credentialHash);
     return true;
   }
-  return areUint8ArraysEqual(credentialHash, against);
+  console.log('match!!3');
+  const result = areUint8ArraysEqual(credentialHash, against);
+  console.log('match!!4 result=' + result);
+  return result;
 }

@@ -5,7 +5,12 @@
 const { subtle } = require('node:crypto').webcrypto;
 
 // For consistent test results, it's better to return a not-random value.
-function getRandomValues(array:Uint8Array) { return array; }
+function getRandomValues(array:Uint8Array) {
+  for(let i = 0; i < array.length; ++i) {
+    array[i] = i % 256;
+  }
+  return array; 
+}
 
 async function decrypt(algorithmParams:AesGcmParams, key:CryptoKey, data:ArrayBuffer):Promise<ArrayBuffer> {
   return subtle.decrypt(algorithmParams, key, data);
@@ -15,6 +20,11 @@ async function deriveKey(algorithm:Pbkdf2Params, baseKey:CryptoKey, derivedKeyTy
                          extractable:boolean, keyUsages:string[]):Promise<CryptoKey> {
   return subtle.deriveKey(algorithm, baseKey, derivedKeyType, extractable, keyUsages);
 }
+
+async function digest(algorithm:string, data:ArrayBuffer):Promise<ArrayBuffer> {
+  return subtle.digest(algorithm, data);
+}
+
 async function encrypt(algorithmParams:AesGcmParams, key:CryptoKey, data:ArrayBuffer):Promise<ArrayBuffer> {
   return subtle.encrypt(algorithmParams, key, data);
 }
@@ -35,6 +45,7 @@ function _mock() {
     subtle: {
       decrypt,
       deriveKey,
+      digest,
       encrypt,
       exportKey,
       importKey

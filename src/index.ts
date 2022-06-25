@@ -2,6 +2,7 @@ import {generateCredentialHash, generateCredentialKey, matchOrCreateCredentialHa
 import {decryptAppData, encryptAppData} from "./appDataEncryption";
 import {getCredentialHash, setCredentialHash, setDeriveKeySalt} from "./keyGenStore";
 import WearContext from "./WearContext";
+import {bytesToString} from "./dataConvertUtil";
 
 /** Checks to see if a context was previously opened via open(). This can be useful
     to present appropriate UI in the app for either request existing credentials (e.g. "log in") or 
@@ -27,7 +28,7 @@ export function dangerouslyDeInitialize():void {
  
     @param encryptedData  An array of bytes encrypted with the key from the old context.
     @return               Promise resolving to same data re-encrypted with the key from the new context. */
-interface IReEncryptFunction { (encryptedData:Uint8Array):Promise<Uint8Array> }
+export interface IReEncryptFunction { (encryptedData:Uint8Array):Promise<Uint8Array> }
 
 /** Returns a function that can be used by caller to re-encrypt data so it's accessible via a new context. This is
     essentially syntactic sugar for a few calls to decrypt() and encrypt().
@@ -75,7 +76,11 @@ export async function changeCredentialsAndReEncrypt(oldContext:WearContext, newU
   if (!await onReEncrypt(_reEncrypt)) throw Error('Re-encryption failed. The current context has not been changed.');  
   
   oldContext.clear();
+  console.log('changeCreden!!1');
+  console.log({newCredentialHash});
   setCredentialHash(newCredentialHash);
+  const retrieved = getCredentialHash(); // DELETE
+  console.log({retrieved});
   return newContext;
 }
 
@@ -89,7 +94,11 @@ export async function changeCredentialsAndReEncrypt(oldContext:WearContext, newU
     @returns             Promise resolving to context that can be passed to other APIs. Treat this opaquely. 
                          DO NOT store in any place but memory. */
 export async function open(userName:string, password:string):Promise<WearContext | null> {
+  console.log('!!1 for ' + userName + ' / ' + password);
   const credentialHash = await generateCredentialHash(userName, password);
+  console.log({credentialHash});
+  const existing:Uint8Array = getCredentialHash() ?? new Uint8Array([]);
+  console.log({existing});
   if (!matchOrCreateCredentialHash(credentialHash)) return null;
   const credentialKeyBytes = await generateCredentialKey(userName, password);
   return new WearContext(credentialKeyBytes);
