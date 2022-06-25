@@ -34,7 +34,7 @@ All the APIs are found in /src/index.ts with documentation around their usage. B
 
 ### Quick Example
 
-The code below shows a minimal set of code to request credentials from a user, read in some encrypted data, and update changed data. In an effort to be self-contained and simple, it uses 1990's-style browser prompts to collect user data and the storage-limited LocalStorage API. But WEaR is agnostic to UI and persistent storage choices, and you can implement differently.
+The code below shows a minimal set of code to request credentials from a user, read in some encrypted data, and update changed data. WEaR is agnostic to UI and persistent storage choices, and you can implement differently.
 
 ```javascript
   import { isInitialized, open, encrypt, decrypt } from 'web-enc-at-rest';
@@ -52,7 +52,7 @@ The code below shows a minimal set of code to request credentials from a user, r
     const context = open(userName, password);
     
     const currentEncryptedData = localStorage.getItem('YOUR_SENSITIVE_DATA') ?? '';
-    const currentData = await decrypt(context, encryptedSensitiveData);
+    const currentData = await decrypt(context, currentEncryptedData);
     const updatedData = prompt('Update sensitive data:', sensitiveData);
     if (updatedData !== currentData) {
       const updatedEncryptedData = await encrypt(context, updatedData);
@@ -64,7 +64,7 @@ The code below shows a minimal set of code to request credentials from a user, r
   updateYourSensitiveData();
 ```
 
-Another unnatural aspect of the previous code example is how all the calls to WEaR APIs are together. You'd more likely call `open()` around a login UI, and then immediately load all encrypted data into an in-memory store with multiple calls to `decrypt()`. Then later when a user changes data within the app, pass the changed data to `encrypt()` and write the new encrypted value to persistent storage. Finally, when the user logs out, call `close()` on the context returned earlier to increase security on the user's workstation.
+An unnatural aspect of the previous code example is how all the calls to WEaR APIs are together. You'd more likely call `open()` around a login UI, and then immediately load all encrypted data into an in-memory store with multiple calls to `decrypt()`. Then later, when a user changes data within the app, pass the changed data to `encrypt()` and write the new encrypted value to persistent storage. Finally, when the user logs out, call `close()` on the context returned earlier to increase security on the user's workstation.
 
 Each of these use cases and more will be explained below.
 
@@ -79,7 +79,7 @@ When the user provides initial credentials to create their account, call `open()
   // Store the context in memory for use during the session.
 ```
 
-IMPORTANT: You must never store the context instance or its contents in anything but memory. Storing it in cookies, localStorage, sessionStorage, querystring params, IndexedDb or any form of persistent storage will compromise the security of your user's data.
+IMPORTANT: You must never store the context instance or its contents in anything but memory. Storing it in cookies, localStorage, sessionStorage, querystring params, IndexedDb or any form of persistent storage will compromise the security of your users' data.
 
 ### Logging In
 
@@ -125,8 +125,10 @@ You will encrypt sensitive data before storing it on disk or other persistent st
 
   const invoice = { amount:250.43, created:'1/1/23', due:'2/1/23' };
   const encryptedInvoice = await encrypt(context, invoice);
-  localStorage.setItem('lastInvoice', encryptedInvoice); // Just an example. Use whatever storage API suits you.
+  localStorage.setItem('lastInvoice', encryptedInvoice);
 ```
+
+You need not use `localStorage` in for persisting user data. It's just easier to show example code with `localStorage` than with more complex APIs like `IndexedDb`. 
 
 ### Reading Encrypted Data
 
@@ -141,7 +143,7 @@ When your web app needs to retrieve and use encrypted data from persistent stora
 
 ### Changing Password or Username
 
-You need to re-encrypt your app data with the new password. To do this, you write a re-encryption function that reads all of your encrypted data from persistent storage, and rewrites it back, encrypted using the new credentials. Pass this function to `changeCredentialsAndReEncrypt()` and it will handle the changes in an atomic way to avoid bricking user data.
+You need to re-encrypt your app data with the new credentials. If you don't, the user won't be able to access their data with the new credentials, effectively bricking it. To re-encrypt, you write a re-encryption function that reads all of your encrypted data from persistent storage, and rewrites it back, encrypted using the new credentials. Pass this function to `changeCredentialsAndReEncrypt()` and it will handle the changes in an atomic way to protect integrity of data and persisted state.
 
 ```javascript
   import { changeCredentialsAndReEncrypt } from 'web-enc-at-rest';
@@ -167,7 +169,7 @@ You need to re-encrypt your app data with the new password. To do this, you writ
 
 ### Protecting Against Supply Chain Attacks
 
-There is a supply chain attack where some code in an imported dependency or transitive dependency can swap out built-in functions in the JS execution environment. To protect against this, you can import WEaR before any other imports. Put the import ahead of all others, or as close to first as you can manage. When the module imports, it takes a snapshot of "trusted" functions to compare against later for tampering. You want that snapshot to happen before a malicious 3rd-party module changes the functions.
+It is possible for some code in an imported dependency or transitive dependency to swap out built-in functions in the JS execution environment. To protect against this, you can import WEaR before any other imports. Put the import ahead of all others, or as close to first as you can manage. When the module imports, it takes a snapshot of "trusted" functions to compare against later for tampering. You want that snapshot to happen before a malicious 3rd-party module changes the functions.
 
 ```javascript
   import 'web-enc-at-rest'; // This import should precede all others.
@@ -184,9 +186,9 @@ This will not protect against every possible supply chain attack. Some other pre
 
 ### Protecting Against User Data Loss
 
-You want some way to deal with losing key generation data which is accessed via localStorage or app data which is accessed according to your implementation. What can cause this?
+You want some way to deal with losing key generation data which is accessed via `localStorage` or app data which is accessed according to your implementation. What can cause this?
 
-* The user chooses an action like "Clear Browser History" that clears localStorage.
+* The user chooses an action like "Clear Browser Data" that clears localStorage.
 * The user's system is low on disk space in a way that initiates data eviction.
 * Something more anomalous, e.g. disk corruption, bad file system writes, bug in browser updating, malware.
 
@@ -203,11 +205,15 @@ If a user initializes WEaR with their credentials from one browser, and then use
 
 If you want to forge ahead, I'll give you a few ideas on how you can handle these use cases.
 
+#### Remote Key Approach
+
 1. Generate the key from a random number generator instead of from credentials. The random number generator be cryptographically secure.
 2. Store the key on a remote server tied to a user account.
 3. When the user logs in with an auth web service, fetch the key from the remote server, e.g. return in the auth web service response.
 
 By decoupling the key from credentials, a single key can be used from multiple devices, and changing credentials won't require re-encrypting data. However, you will have another attack vector to defend against - a breach of your remote server would give an attacker keys that can be used to decrypt data. And it won't be possible to authenticate users without being online.
+
+#### Recreate from Remote Server Approach
 
 Here's another approach to multiple-device encryption-at-rest:
 
@@ -217,7 +223,7 @@ Here's another approach to multiple-device encryption-at-rest:
   2. Fetch all sensitive data from web services. It will be in plaintext.
   3. Encrypt the sensitive data and overwrite it in browser persistent storage.
 
-### Contributing to Project
+### Contributing to This Project
 
 I am interested in working with other people, but not in the typical way that open source projects do. Progress on this library will be slow and cautious, supported by thorough design. There's such a high bar to making changes, that I think it would be frustrating for both myself and contributors to work through PRs. So this project just doesn't seem to be the kind where I should accept PRs from the coding public.
 
@@ -230,13 +236,13 @@ The above items can all be entered via Github issues for the project.
 
 ### Limited Offer - Free Consulting Sessions for Using WEaR in Your Project
 
-I want to know about how people are using WEaR in their projects as a means to improving the library. And you might get a few shortcuts to understanding and using it well in your project by talking to me. So maybe it would work out well for both of us to have a call over Zoom or Discord for a half hour. If you are interested in this, see contact info below for reaching me.
+I want to know about how people are using WEaR in their projects to help me improve the library. And you might get some useful advice for using WEaR in your project by talking to me. So maybe it would work out well for both of us to have a call over Zoom or Discord for a half hour. If you are interested in this, see contact info below for reaching me.
 
 I don't know how long I'll be doing these sessions. But if you see this message in the README, I'm probably still doing them.
 
 ### Contact Info
 
-Here is my LinkedIn profile. 
+Here is my LinkedIn profile. You can use it to message me.
 https://www.linkedin.com/in/erikhermansen/
 
 I generally accept connections on LinkedIn from strangers. Just don't pitch me on a product or service. And it helps my mental sorting if you mention you have an interest in WEaR.
