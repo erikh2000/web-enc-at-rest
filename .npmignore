@@ -1,2 +1,9 @@
-tsconfig.json 
+tsconfig.json
+tsconfig.build.json 
 src
+coverage
+babel.config.js
+.eslintignore
+.eslintrc
+.nyc_output
+.idea
