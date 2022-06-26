@@ -149,10 +149,10 @@ You need to re-encrypt your app data with the new credentials. If you don't, the
   import { changeCredentialsAndReEncrypt } from 'web-enc-at-rest';
   ...
 
-  async function onReEncrypt(reEncryptor) {
+  async function onReEncrypt(reEncryptFunc) {
     try {
       const encryptedInvoice = localStorage.getItem('lastInvoice');
-      const reEncryptedInvoice = await reEncryptor(encryptedInvoice);
+      const reEncryptedInvoice = await reEncryptFunc(encryptedInvoice);
       localStorage.setItem('lastInvoice', reEncryptedInvoice);    
       return true;
     } catch(e) {
@@ -165,7 +165,6 @@ You need to re-encrypt your app data with the new credentials. If you don't, the
   context = await changeCredentialsAndReEncrypt(context, newUserName, newPassword, onReEncrypt); 
   
 ```
-
 
 ### Protecting Against Supply Chain Attacks
 
@@ -195,7 +194,7 @@ You want some way to deal with losing key generation data which is accessed via 
 There's basically two solutions:
 
 * Just accept the data loss and start over with new data. OR...
-* Use an online backup and restore from it.
+* Use an online backup/synchronization service and restore from it.
 
 Accepting the data loss is the easiest thing, of course. You'll have to decide if it will work for users of your app.
 
@@ -213,15 +212,30 @@ If you want to forge ahead, I'll give you a few ideas on how you can handle thes
 
 By decoupling the key from credentials, a single key can be used from multiple devices, and changing credentials won't require re-encrypting data. However, you will have another attack vector to defend against - a breach of your remote server would give an attacker keys that can be used to decrypt data. And it won't be possible to authenticate users without being online.
 
-#### Recreate from Remote Server Approach
+#### Recreate App Data from Remote Server Approach
 
 Here's another approach to multiple-device encryption-at-rest:
 
 1. Authenticate the user against a web service.
 2. If the web service auth succeeds, but the call to `open()` with same credentials fails, then:
-  1. Call `dangerouslyDeInitialize()` and make a second call to `open()`, which will now succeed. Your encrypted app data is now bricked.
-  2. Fetch all sensitive data from web services. It will be in plaintext.
-  3. Encrypt the sensitive data and overwrite it in browser persistent storage.
+3. Call `dangerouslyDeInitialize()` and make a second call to `open()`, which will now succeed. Your encrypted app data is now bricked.
+4. Fetch all sensitive data from web services. It will be in plaintext.
+5. Encrypt the sensitive data and overwrite it in browser persistent storage.
+
+#### Synchronized App Data Approach
+
+And another way that I thought of while I was sipping my coffee this morning...
+
+If you want to enable multiple-device authentication, you almost certainly want some way to synchronize app data between multiple devices as well. And a path to doing that is synchronizing the local app data with a remote database. You could use something like PouchDb to do that. So with the prerequisite of app data synchronization being a solved problem, the following approach should work:
+
+1. Authenticate the user against a web service.
+2. Complete a synchronization of the local app data against a remote server.
+3. Call `open()` with same credentials. If it fails, then:
+4. Call `dangerouslyDeInitialize()` and make a second call to `open()` with the same credentials, which will now succeed.
+
+### One-Browser/Multiple-Users Probably Won't Ever Be Supported
+
+WEaR is intentionally limited to support just one user account per browser instance. I figure that if you care enough about your users' app data to encrypt it, then you won't want the additional attack vectors that a "hotseat" style of web app adds. Note that a device that allows for multiple users via O/S-level log in, will give you the same per-user data provisioning.
 
 ### Contributing to This Project
 
@@ -234,15 +248,9 @@ Here are the kinds of contributions I am seeking, if you are gracious enough to 
 
 The above items can all be entered via Github issues for the project.
 
-### Limited Offer - Free Consulting Sessions for Using WEaR in Your Project
-
-I want to know about how people are using WEaR in their projects to help me improve the library. And you might get some useful advice for using WEaR in your project by talking to me. So maybe it would work out well for both of us to have a call over Zoom or Discord for a half hour. If you are interested in this, see contact info below for reaching me.
-
-I don't know how long I'll be doing these sessions. But if you see this message in the README, I'm probably still doing them.
-
 ### Contact Info
 
-Here is my LinkedIn profile. You can use it to message me.
+Here is my LinkedIn profile. You can use it to message me. 
 https://www.linkedin.com/in/erikhermansen/
 
-I generally accept connections on LinkedIn from strangers. Just don't pitch me on a product or service. And it helps my mental sorting if you mention you have an interest in WEaR.
+I generally accept connections on LinkedIn from strangers, particularly if we have a shared interest, like Offline-First or encryption-at-rest. Just please don't pitch me on a product or service. And it helps my mental sorting if you mention you have an interest in WEaR.
