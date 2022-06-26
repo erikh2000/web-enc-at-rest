@@ -1,6 +1,6 @@
 {
   "name": "web-enc-at-rest",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Encryption-at-Rest for Web Apps Library",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
