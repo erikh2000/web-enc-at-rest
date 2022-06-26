@@ -6,8 +6,10 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "bump": "npm version patch --force && git commit -m \"version bump\" ./package.json && git push",
     "clean": "rm -rf coverage dist",
     "clean:modules": "rm -rf node_modules package-lock.json && npm install",
+    "publish": "npm run build && npm publish",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --collectCoverageFrom=\"./src/**\"",
