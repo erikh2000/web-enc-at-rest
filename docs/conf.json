@@ -1,0 +1,20 @@
+{
+  "destination":"./docs",
+  "plugins": [ "jsdoc-plugin-typescript"],
+  "recurseDepth": 10,
+  "source": {
+    "include": ["./dist/index.js"]
+  },
+  "sourceType": "module",
+  "tags": {
+    "allowUnknownTags": true,
+    "dictionaries": ["jsdoc","closure"]
+  },
+  "templates": {
+    "cleverLinks": false,
+    "monospaceLinks": false
+  },
+  "typescript": {
+    "moduleRoot": "src"
+  }
+}

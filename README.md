@@ -206,7 +206,7 @@ If you want to forge ahead, I'll give you a few ideas on how you can handle thes
 
 #### Remote Key Approach
 
-1. Generate the key from a random number generator instead of from credentials. The random number generator be cryptographically secure.
+1. Generate the key from a random number generator instead of from credentials. The random number generator needs to be cryptographically secure.
 2. Store the key on a remote server tied to a user account.
 3. When the user logs in with an auth web service, fetch the key from the remote server, e.g. return in the auth web service response.
 
@@ -235,18 +235,7 @@ If you want to enable multiple-device authentication, you almost certainly want 
 
 ### One-Browser/Multiple-Users Probably Won't Ever Be Supported
 
-WEaR is intentionally limited to support just one user account per browser instance. I figure that if you care enough about your users' app data to encrypt it, then you won't want the additional attack vectors that a "hotseat" style of web app adds. Note that a device that allows for multiple users via O/S-level log in, will give you the same per-user data provisioning.
-
-### Contributing to This Project
-
-I am interested in working with other people, but not in the typical way that open source projects do. Progress on this library will be slow and cautious, supported by thorough design. There's such a high bar to making changes, that I think it would be frustrating for both myself and contributors to work through PRs. So this project just doesn't seem to be the kind where I should accept PRs from the coding public.
-
-Here are the kinds of contributions I am seeking, if you are gracious enough to offer them:
-* Well-considered criticism of the code, particularly if it helps to prevent security vulnerabilities.
-* Bug reports.
-* Feature requests. (I am very much inclined to keep this core package minimal, but I'm planning add-on packages.)
-
-The above items can all be entered via Github issues for the project.
+WEaR is intentionally limited to support just one user account per browser instance. I figure that if you care enough about your users' app data to encrypt it, then you won't want the additional attack vectors that a "hot seat" style of web app adds. Note that a device that allows for multiple users via O/S-level log in will give you per-user data provisioning, e.g. launching Chrome after switching to a different O/S user account, will show browser data (bookmarks, downloads, localStorage, IndexedDb) for the second user instead of the first.
 
 ### Contact Info
 

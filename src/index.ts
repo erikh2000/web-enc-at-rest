@@ -1,3 +1,5 @@
+/** @module API **/
+
 import {generateCredentialHash, generateCredentialKey, matchOrCreateCredentialHash} from "./keyGen";
 import {decryptAppData, encryptAppData} from "./appDataEncryption";
 import {getCredentialHash, setCredentialHash, setDeriveKeySalt} from "./keyGenStore";
