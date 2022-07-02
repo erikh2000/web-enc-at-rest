@@ -2,6 +2,7 @@ tsconfig.json
 tsconfig.build.json 
 src
 coverage
+docs
 babel.config.js
 .eslintignore
 .eslintrc

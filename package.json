@@ -9,7 +9,7 @@
     "bump": "npm version patch --force && git commit -m \"version bump\" ./package.json && git push",
     "clean": "rm -rf coverage dist",
     "clean:modules": "rm -rf node_modules package-lock.json && npm install",
-    "docs": "jsdoc -c ./docs/conf.json",
+    "docs": "jsdoc -c ./docs/conf.json -d ./docs/dist/",
     "publish": "npm run build && npm publish",
     "test": "jest",
     "test:watch": "jest --watch",

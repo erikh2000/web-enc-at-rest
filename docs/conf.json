@@ -1,5 +1,5 @@
 {
-  "destination":"./docs",
+  "destination": "./docs/",
   "plugins": [ "jsdoc-plugin-typescript"],
   "recurseDepth": 10,
   "source": {
@@ -12,6 +12,9 @@
   },
   "templates": {
     "cleverLinks": false,
+    "default": {
+      "layoutFile": "./docs/template/layout.tmpl"
+    },
     "monospaceLinks": false
   },
   "typescript": {
