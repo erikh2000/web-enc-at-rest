@@ -1,8 +1,8 @@
 /** @module API **/
 
-import {generateCredentialHash, generateCredentialKey, matchOrCreateCredentialHash} from "./keyGen";
+import {generateCredentialKey, generateCredentialProof, matchOrCreateCredentialProof} from "./keyGen";
 import {decryptAppData, encryptAppData} from "./appDataEncryption";
-import {getCredentialHash, setCredentialHash, setDeriveKeySalt} from "./keyGenStore";
+import {getCredentialProof, setCredentialProof, setDeriveKeySalt} from "./keyGenStore";
 import WearContext from "./WearContext";
 
 /** Checks to see if a context was previously opened via open(). This can be useful
@@ -11,7 +11,7 @@ import WearContext from "./WearContext";
  
     @return True if context was previously opened, or false if not. */
 export function isInitialized():boolean {
-  return getCredentialHash() !== null;
+  return getCredentialProof() !== null;
 }
 
 /** Clears any information used to verify credentials or generate credential keys. Read the warning below before calling this.
@@ -19,7 +19,7 @@ export function isInitialized():boolean {
     WARNING: After this call, you won't be able to generate the same key from credentials. If you've got user data 
     encrypted with it, that data will be bricked. */
 export function dangerouslyDeInitialize():void {
-  setCredentialHash(null);
+  setCredentialProof(null);
   setDeriveKeySalt(null);
 }
 
@@ -70,14 +70,15 @@ interface IReEncryptCallback { (reEncryptor:IReEncryptFunction):Promise<boolean>
     @return            Promise resolving to new context generated from new credentials if everything was successful. */
 export async function changeCredentialsAndReEncrypt(oldContext:WearContext, newUserName:string, newPassword:string, onReEncrypt:IReEncryptCallback):Promise<WearContext> {
   if (oldContext.isClear()) throw Error('oldContext is unusable because it was closed.');
-  const newContext = new WearContext(await generateCredentialKey(newUserName, newPassword));
-  const newCredentialHash = await generateCredentialHash(newUserName, newPassword);
+  const newCredentialKey = await generateCredentialKey(newUserName, newPassword);
+  const newContext = new WearContext(newCredentialKey);
+  const newCredentialProof = await generateCredentialProof(newCredentialKey);
   
   const _reEncrypt = createReEncryptor(oldContext, newContext);
   if (!await onReEncrypt(_reEncrypt)) throw Error('Re-encryption failed. The current context has not been changed.');  
   
   oldContext.clear();
-  setCredentialHash(newCredentialHash);
+  setCredentialProof(newCredentialProof);
   return newContext;
 }
 
@@ -91,10 +92,9 @@ export async function changeCredentialsAndReEncrypt(oldContext:WearContext, newU
     @returns             Promise resolving to context that can be passed to other APIs. Treat this opaquely. 
                          DO NOT store in any place but memory. */
 export async function open(userName:string, password:string):Promise<WearContext | null> {
-  const credentialHash = await generateCredentialHash(userName, password);
-  if (!matchOrCreateCredentialHash(credentialHash)) return null;
-  const credentialKeyBytes = await generateCredentialKey(userName, password);
-  return new WearContext(credentialKeyBytes);
+  const credentialKey = await generateCredentialKey(userName, password);
+  if (!await matchOrCreateCredentialProof(credentialKey)) return null;
+  return new WearContext(credentialKey);
 }
 
 /** Prevent any further encryption/decryption with the passed-in context. Useful for preventing attacks based on 

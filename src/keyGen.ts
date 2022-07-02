@@ -1,8 +1,10 @@
 import { getSubtle } from "./protectedCrypto";
 import { randomBytes } from "./randomUtil";
 import { stringToBytes } from "./dataConvertUtil";
-import {getCredentialHash, getDeriveKeySalt, setCredentialHash, setDeriveKeySalt} from "./keyGenStore";
+import {getCredentialProof, getDeriveKeySalt, setCredentialProof, setDeriveKeySalt} from "./keyGenStore";
 import {areUint8ArraysEqual} from "./arrayUtil";
+import {encrypt} from "./index";
+import {encryptAppData} from "./appDataEncryption";
 
 const PBKDF2_SALT_BYTE_LENGTH = 16;
 export function getOrCreateDeriveKeySalt():Uint8Array {
@@ -36,19 +38,23 @@ export async function generateCredentialKey(userName:string, password:string):Pr
   return await subtle.importKey('raw', keyBytes, 'AES-GCM', false, ['decrypt', 'encrypt']);
 }
 
-export async function generateCredentialHash(userName:string, password:string):Promise<Uint8Array> {
-  const subtle = getSubtle();
-  const passphrase = _concatPassphraseFromCredentials(userName, password);
-  const passphraseBytes = stringToBytes(passphrase);
-  const digestBuffer:ArrayBuffer = await subtle.digest('SHA-256', passphraseBytes);
-  return new Uint8Array(digestBuffer);
+function _createCredentialProofPlainText():Uint8Array {
+  const proof = new Uint8Array(256);
+  for (let i = 0; i < 256; ++i) { proof[i] = i; }
+  return proof;
 }
 
-export function matchOrCreateCredentialHash(credentialHash:Uint8Array):boolean {
-  const against = getCredentialHash();
+const CREDENTIAL_PROOF_PLAINTEXT = _createCredentialProofPlainText();
+export async function generateCredentialProof(credentialKey:CryptoKey) {
+  return encryptAppData(credentialKey, CREDENTIAL_PROOF_PLAINTEXT);
+}
+
+export async function matchOrCreateCredentialProof(credentialKey:CryptoKey) {
+  const credentialProof = await generateCredentialProof(credentialKey);
+  const against = getCredentialProof();
   if (against === null) {
-    setCredentialHash(credentialHash);
+    setCredentialProof(credentialProof);
     return true;
   }
-  return areUint8ArraysEqual(credentialHash, against);
+  return areUint8ArraysEqual(credentialProof, against);
 }

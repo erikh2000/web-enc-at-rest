@@ -1,5 +1,5 @@
 import { restoreMock } from '../__mocks__/mockLocalStorage';
-import { getDeriveKeySalt, setDeriveKeySalt, getCredentialHash, setCredentialHash} from "../keyGenStore";
+import { getDeriveKeySalt, setDeriveKeySalt, getCredentialProof, setCredentialProof} from "../keyGenStore";
 
 describe('keyGenStore', () => {
   beforeEach(() => restoreMock());
@@ -28,29 +28,29 @@ describe('keyGenStore', () => {
     });
   });
 
-  describe('getCredentialHash()', () => {
+  describe('getCredentialProof()', () => {
     it('returns null for unset value', () => {
-      const retrieved = getCredentialHash();
+      const retrieved = getCredentialProof();
       expect(retrieved).toBeNull();
     });
   });
 
-  describe('setCredentialHash()', () => {
+  describe('setCredentialProof()', () => {
     const HASH_VALUE = [235, 243, 64, 36, 187, 28, 93, 74, 94, 96, 245, 181, 82, 42, 201, 203, 223, 
       136, 38, 175, 255, 245, 153, 99, 162, 149, 173, 116, 216, 132, 36, 44];
     
     it('stores a value', () => {
-      const hash = new Uint8Array(HASH_VALUE);
-      setCredentialHash(hash);
-      const retrieved = getCredentialHash();
-      expect(retrieved).toStrictEqual(hash);
+      const proof = new Uint8Array(HASH_VALUE);
+      setCredentialProof(proof);
+      const retrieved = getCredentialProof();
+      expect(retrieved).toStrictEqual(proof);
     });
 
     it('clears a value', () => {
-      const hash = new Uint8Array(HASH_VALUE);
-      setCredentialHash(hash);
-      setCredentialHash(null);
-      const retrieved = getCredentialHash();
+      const proof = new Uint8Array(HASH_VALUE);
+      setCredentialProof(proof);
+      setCredentialProof(null);
+      const retrieved = getCredentialProof();
       expect(retrieved).toBeNull();
     });
   });
