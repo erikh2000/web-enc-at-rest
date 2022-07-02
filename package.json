@@ -5,9 +5,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "bump": "npm version patch --force && git commit -m \"version bump\" ./package.json && git push",
-    "clean": "rm -rf coverage dist",
+    "build": "tsc -p tsconfig.build.json && npm run docs",
+    "bump": "npm version patch --force && git commit -m \"version bump\" ./package.json",
+    "clean": "rm -rf coverage dist docs/dist",
     "clean:modules": "rm -rf node_modules package-lock.json && npm install",
     "docs": "jsdoc -c ./docs/conf.json -d ./docs/dist/",
     "publish": "npm run build && npm publish",
