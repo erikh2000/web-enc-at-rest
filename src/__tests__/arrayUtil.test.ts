@@ -1,5 +1,6 @@
 import { areUint8ArraysEqual } from "../arrayUtil";
 
+// Full tests.
 describe('arrayUtil', () => {
   function _allPossibleValuesArray():Uint8Array {
     const array = new Uint8Array(256);

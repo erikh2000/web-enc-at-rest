@@ -1,7 +1,6 @@
 const trusted = {
   decrypt: global.crypto?.subtle?.decrypt,
   deriveKey: global.crypto?.subtle?.deriveKey,
-  digest: global.crypto?.subtle?.digest,
   encrypt: global.crypto?.subtle?.encrypt,
   exportKey: global.crypto?.subtle?.exportKey,
   importKey: global.crypto?.subtle?.importKey,
@@ -20,7 +19,6 @@ const trusted = {
 export function findTampering():boolean {
   return global.crypto?.subtle?.decrypt !== trusted.decrypt ||
     global.crypto?.subtle?.deriveKey !== trusted.deriveKey ||
-    global.crypto?.subtle?.digest !== trusted.digest ||
     global.crypto?.subtle?.encrypt !== trusted.encrypt ||
     global.crypto?.subtle?.importKey !== trusted.importKey ||
     global.crypto?.subtle?.exportKey !== trusted.exportKey ||
@@ -30,7 +28,7 @@ export function findTampering():boolean {
 export function getSubtle():SubtleCrypto {
   const subtle = global.crypto && global.crypto.subtle;
   if (!subtle) throw Error('Browser does not implement Web Crypto.');
-  if (!subtle.importKey || !subtle.deriveKey || !subtle.decrypt || !subtle.digest || !subtle.encrypt || !subtle.exportKey) throw Error('Web Crypto on this browser does not implement required APIs.');
+  if (!subtle.importKey || !subtle.deriveKey || !subtle.decrypt || !subtle.encrypt || !subtle.exportKey) throw Error('Web Crypto on this browser does not implement required APIs.');
   if (findTampering()) throw Error('Crypto functions have been tampered with.');
   return subtle;
 }

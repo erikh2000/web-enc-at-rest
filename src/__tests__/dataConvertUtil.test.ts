@@ -1,5 +1,6 @@
 import { anyToBytes,  bytesToAny, bytesToString, stringToBytes } from "../dataConvertUtil";
 
+// TODO move relevant tests to higher-level contracts after revising serialization.
 describe('dataConvertUtil', () => {
   describe('bytesToString()', () => {
     it('returns empty string for empty byte array', () => {

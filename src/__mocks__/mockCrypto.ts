@@ -21,10 +21,6 @@ async function deriveKey(algorithm:Pbkdf2Params, baseKey:CryptoKey, derivedKeyTy
   return subtle.deriveKey(algorithm, baseKey, derivedKeyType, extractable, keyUsages);
 }
 
-async function digest(algorithm:string, data:ArrayBuffer):Promise<ArrayBuffer> {
-  return subtle.digest(algorithm, data);
-}
-
 async function encrypt(algorithmParams:AesGcmParams, key:CryptoKey, data:ArrayBuffer):Promise<ArrayBuffer> {
   return subtle.encrypt(algorithmParams, key, data);
 }
@@ -45,7 +41,6 @@ function _mock() {
     subtle: {
       decrypt,
       deriveKey,
-      digest,
       encrypt,
       exportKey,
       importKey

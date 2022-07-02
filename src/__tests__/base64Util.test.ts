@@ -1,5 +1,6 @@
 import { bytesToBase64, base64ToBytes } from "../base64Util";
 
+// Full tests.
 describe('base64Util', () => {
   describe('bytesToBase64() and base64ToBytes()', () => {
     function _checkEncodeDecode(bytes:Uint8Array) {
