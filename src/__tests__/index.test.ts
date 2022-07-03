@@ -3,14 +3,18 @@ import { restoreMock as restoreLocalStorageMock } from '../__mocks__/mockLocalSt
 import {
   changeCredentialsAndReEncrypt,
   close,
-  createReEncryptor,
   dangerouslyDeInitialize,
-  decrypt,
-  encrypt, IReEncryptFunction,
+  decryptBytes,
+  decryptObject,
+  encryptBytes,
+  encryptObject,
   isInitialized,
   open
 } from '../index'
 import WearContext from "../WearContext";
+import {IReplacer, IReviver} from "../dataConvertUtil";
+import DoneCallback = jest.DoneCallback;
+import {base64ToBytes, bytesToBase64} from "../base64Util";
 
 describe('API', () => {
   beforeEach(() => {
@@ -89,7 +93,7 @@ describe('API', () => {
     });
   });
   
-  describe('encrypt()', () => {
+  describe('encryptObject()', () => {
     let context:WearContext;
     
     beforeEach((done) => {
@@ -103,9 +107,9 @@ describe('API', () => {
 
     it('encrypts data that matches original value after decryption', (done) => {
       const value = { a:3, b:['apple', 95], c:{x:85} };
-      encrypt(context, value)
-      .then((cipherText:Uint8Array) => {
-        return decrypt(context, cipherText);
+      encryptObject(context, value)
+      .then((cipherText:string) => {
+        return decryptObject(context, cipherText);
       }).then((plaintext:any) => {
         expect(plaintext).toStrictEqual(value);
         done();
@@ -115,7 +119,7 @@ describe('API', () => {
     it('throws if context has been cleared', (done) => {
       const value = { a:3, b:['apple', 95], c:{x:85} };
       close(context);
-      encrypt(context, value)
+      encryptObject(context, value)
       .then(() => {
         expect(true).toBeFalsy();
       }, () => {
@@ -124,7 +128,7 @@ describe('API', () => {
     });
   });
 
-  describe('decrypt()', () => {
+  describe('decryptObject()', () => {
     let context:WearContext;
 
     beforeEach((done) => {
@@ -137,9 +141,68 @@ describe('API', () => {
     });
 
     it('throws if context has been cleared', (done) => {
-      const data = new Uint8Array(100);
+      const data = '';
       close(context);
-      decrypt(context, data)
+      decryptObject(context, data)
+        .then(() => {
+          expect(true).toBeFalsy();
+        }, () => {
+          done();
+        });
+    });
+  });
+
+  describe('encryptBytes()', () => {
+    let context:WearContext;
+
+    beforeEach((done) => {
+      open('bubba', 'unguessable')
+        .then((newContext:WearContext|null) => {
+          if (!newContext) throw Error('Unexpected');
+          context = newContext as WearContext;
+          done();
+        });
+    });
+
+    it('encrypts data that matches original value after decryption', (done) => {
+      const value = new Uint8Array([0,1,2,3,4,5,6]);
+      encryptBytes(context, value)
+        .then((cipherText:string) => {
+          return decryptBytes(context, cipherText);
+        }).then((plaintext:any) => {
+        expect(plaintext).toStrictEqual(value);
+        done();
+      });
+    });
+
+    it('throws if context has been cleared', (done) => {
+      const value = new Uint8Array([0,1,2,3,4,5,6]);
+      close(context);
+      encryptBytes(context, value)
+        .then(() => {
+          expect(true).toBeFalsy();
+        }, () => {
+          done();
+        });
+    });
+  });
+
+  describe('decryptBytes()', () => {
+    let context:WearContext;
+
+    beforeEach((done) => {
+      open('bubba', 'unguessable')
+        .then((newContext:WearContext|null) => {
+          if (!newContext) throw Error('Unexpected');
+          context = newContext as WearContext;
+          done();
+        });
+    });
+
+    it('throws if context has been cleared', (done) => {
+      const data = '';
+      close(context);
+      decryptBytes(context, data)
         .then(() => {
           expect(true).toBeFalsy();
         }, () => {
@@ -148,53 +211,61 @@ describe('API', () => {
     });
   });
   
-  describe('createReEncryptor()', () => {
-    let oldContext:WearContext, newContext:WearContext;
-
-    beforeEach((done) => {
-      open('bubba', 'oldpw')
-      .then((context:WearContext|null) => {
-        if (!context) throw Error('Unexpected');
-        oldContext = context as WearContext;
-        dangerouslyDeInitialize();
-        return open('bubba', 'newpw');
-      }).then((context:WearContext|null) => {
-        if (!context) throw Error('Unexpected');
-        newContext = context as WearContext;
+  describe('serialization', () => {
+    function _expectMatch(value:any, done:DoneCallback, replacer?:IReplacer, reviver?:IReviver) {
+      let context:WearContext;
+      open('bubba', 'unguessable')
+      .then((newContext:WearContext|null) => {
+        if (!newContext) throw Error('Unexpected');
+        context = newContext;
+        return encryptObject(context, value, replacer);
+      }).then((encrypted:string) => {
+        return decryptObject(context, encrypted, reviver);   
+      }).then((decrypted:any) => {
+        expect(decrypted).toStrictEqual(value);
         done();
       });
+    }
+    
+    it('matches empty object', (done) => {
+      _expectMatch({}, done);
     });
 
-    it('throws if old context is closed', () => {
-      close(oldContext);
-      expect(() => createReEncryptor(oldContext, newContext)).toThrow();
+    it('matches special primitive values', (done) => {
+      _expectMatch({a:null, c:Infinity, d:-Infinity, e:NaN}, done);
     });
 
-    it('throws if new context is closed', () => {
-      close(newContext);
-      expect(() => createReEncryptor(oldContext, newContext)).toThrow();
+    it('matches empty string', (done) => {
+      _expectMatch({ a:'' }, done);
+    });
+
+    it('matches ASCII characters', (done) => {
+      _expectMatch({ a:'abcABC012!@#$%^&*()_=+' }, done);
+    });
+
+    it('matches Unicode character', (done) => {
+      _expectMatch({ a:'©' }, done);
     });
     
-    it('re-encrypts data as expected', (done) => {
-      const plaintext = 'hello';
-      let cipherOld:Uint8Array, expected:Uint8Array;
-      encrypt(oldContext, plaintext).then(encrypted => {
-        cipherOld = encrypted;
-        return encrypt(newContext, plaintext);
-      }).then(encrypted => {
-        expected = encrypted;
-        const reEncrypt:IReEncryptFunction = createReEncryptor(oldContext, newContext);
-        return reEncrypt(cipherOld);
-      }).then((reEncrypted:Uint8Array) => {
-        expect(reEncrypted).toEqual(expected);
-        done();
-      });
+    it('matches nested object', (done) => {
+      _expectMatch({ a:{ b:{ c:3, d:'a'}, e:[1,2,3] } }, done);
+    });
+    
+    it('matches object with replacer/reviver', (done) => {
+      function _replacer(key:string, value:any):any {
+        return (key === 'special') ? bytesToBase64(value) : value;
+      }
+      function _reviver(key:string, value:string):any {
+        return (key === 'special') ? new Uint8Array(base64ToBytes(value)) : value;
+      }
+      const special = new Uint8Array([0,1,2,3,4,5]);
+      _expectMatch({special}, done, _replacer, _reviver);
     });
   });
   
   describe('changeCredentialsAndReEncrypt()', () => {
     let oldContext:WearContext;
-    let oldEncryptedData:Uint8Array;
+    let oldEncryptedData:string;
     const OLD_USERNAME = 'bubba', OLD_PW = 'oldpw';
     const NEW_USERNAME = 'Sir Bubba', NEW_PW = 'newpw';
     const PLAINTEXT = 'some stupid data';
@@ -204,8 +275,8 @@ describe('API', () => {
       .then((context:WearContext|null) => {
         if (!context) throw Error('Unexpected');
         oldContext = context as WearContext;
-        return encrypt(oldContext, PLAINTEXT);
-      }).then((encrypted:Uint8Array) => {
+        return encryptObject(oldContext, PLAINTEXT);
+      }).then((encrypted:string) => {
         oldEncryptedData = encrypted;
         done();
       });
@@ -213,7 +284,7 @@ describe('API', () => {
     
     it('throws without re-encrypting if old context is closed', (done) => {
       close(oldContext);
-      async function onReEncrypt(reEncryptor:IReEncryptFunction):Promise<boolean> {
+      async function onReEncrypt(oldContext2:WearContext, newContext:WearContext):Promise<boolean> {
         expect(true).toBeFalsy(); // Execution should not arrive here.
         return true;
       }
@@ -224,7 +295,7 @@ describe('API', () => {
     });
     
     it('throws if re-encryption callback returns false', (done) => {
-      async function onReEncrypt(reEncryptor:IReEncryptFunction):Promise<boolean> { return false; }
+      async function onReEncrypt(oldContext2:WearContext, newContext:WearContext):Promise<boolean> { return false; }
       changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then(
         () => { expect(true).toBeFalsy(); }, // Execution should not arrive here.
         () => { done(); }
@@ -232,7 +303,7 @@ describe('API', () => {
     });
 
     it('leaves old context open if re-encryption callback returns false', (done) => {
-      async function onReEncrypt(reEncryptor:IReEncryptFunction):Promise<boolean> { return false; }
+      async function onReEncrypt(oldContext2:WearContext, newContext:WearContext):Promise<boolean> { return false; }
       changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then(
         () => { expect(true).toBeFalsy(); }, // Execution should not arrive here.
         () => {
@@ -243,21 +314,21 @@ describe('API', () => {
     });
 
     it('re-encrypts', (done) => {
-      let newEncryptedData:Uint8Array;
-      async function onReEncrypt(reEncryptor:IReEncryptFunction):Promise<boolean> {
-        newEncryptedData = await reEncryptor(oldEncryptedData);
+      let newEncryptedData:string;
+      async function onReEncrypt(oldContext2:WearContext, newContext:WearContext):Promise<boolean> {
+        newEncryptedData = await encryptObject(newContext, await decryptObject(oldContext2, oldEncryptedData));
         return true;
       }
       changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then((newContext:WearContext) => {
-        return encrypt(newContext, PLAINTEXT);
-      }).then((expected:Uint8Array) => {
+        return encryptObject(newContext, PLAINTEXT);
+      }).then((expected:string) => {
         expect(newEncryptedData).toEqual(expected);
         done();
       })
     });
 
     it('closes old context after successful return', (done) => {
-      async function onReEncrypt(reEncryptor:IReEncryptFunction):Promise<boolean> { return true; }
+      async function onReEncrypt(oldContext2:WearContext, newContext:WearContext):Promise<boolean> { return true; }
       changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then((newContext:WearContext) => {
         expect(oldContext.isClear());
         done();
@@ -265,7 +336,7 @@ describe('API', () => {
     });
     
     it('causes old credentials to not open after successful return', (done) => {
-      async function onReEncrypt(reEncryptor:IReEncryptFunction):Promise<boolean> { return true; }
+      async function onReEncrypt(oldContext2:WearContext, newContext:WearContext):Promise<boolean> { return true; }
       changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then((newContext:WearContext) => {
         return open(OLD_USERNAME, OLD_PW);
       }).then((attemptOldContext:WearContext|null) => {
@@ -275,7 +346,7 @@ describe('API', () => {
     });
 
     it('causes new credentials to open after successful return', (done) => {
-      async function onReEncrypt(reEncryptor:IReEncryptFunction):Promise<boolean> { return true; }
+      async function onReEncrypt(oldContext2:WearContext, newContext:WearContext):Promise<boolean> { return true; }
       changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then((newContext:WearContext) => {
         return open(NEW_USERNAME, NEW_PW);
       }).then((attemptNewContext:WearContext|null) => {

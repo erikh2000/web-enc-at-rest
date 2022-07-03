@@ -4,6 +4,8 @@ import {generateCredentialKey, generateCredentialProof, matchOrCreateCredentialP
 import {decryptAppData, encryptAppData} from "./appDataEncryption";
 import {getCredentialProof, setCredentialProof, setDeriveKeySalt} from "./keyGenStore";
 import WearContext from "./WearContext";
+import {anyToBytes, bytesToAny, IReplacer, IReviver} from "./dataConvertUtil";
+import {base64ToBytes, bytesToBase64} from "./base64Util";
 
 /** Checks to see if a context was previously opened via open(). This can be useful
     to present appropriate UI in the app for either request existing credentials (e.g. "log in") or 
@@ -23,39 +25,14 @@ export function dangerouslyDeInitialize():void {
   setDeriveKeySalt(null);
 }
 
-/** A function that can be used to re-encrypt data. It performs 1. decrypt with key from old context and then 
-    2. encrypt with key from new context. The old and new context will be available to the function via closure when
-    this function is returned from `createReEncryptor()`.
- 
-    @param encryptedData  An array of bytes encrypted with the key from the old context.
-    @return               Promise resolving to same data re-encrypted with the key from the new context. */
-export interface IReEncryptFunction { (encryptedData:Uint8Array):Promise<Uint8Array> }
-
-/** Returns a function that can be used by caller to re-encrypt data so it's accessible via a new context. This is
-    essentially syntactic sugar for a few calls to decrypt() and encrypt().
-
-    @param oldContext Context containing key under which data is currently encrypted.
-    @param newContext Context containing key under which data should be re-encrypted.
-    @return           Function in form of 
-                      `async function reEncrypt(oldEncryptedData:Uint8Array):Promise<Uint8Array>`. */
-export function createReEncryptor(oldContext:WearContext, newContext:WearContext):IReEncryptFunction {
-  if (oldContext.isClear()) throw Error('oldContext is unusable because it was closed.');
-  if (newContext.isClear()) throw Error('newContext is unusable because it was closed.');
-  async function _reEncrypt(encryptedData:Uint8Array) {
-    const plaintext = await decrypt(oldContext, encryptedData);
-    return await encrypt(newContext, plaintext);
-  }
-  return _reEncrypt;
-}
-
 /** Callback function to app-supplied re-encryption logic. In your implementation, you will want to 
     re-encrypt all data you previously encrypted and save it in persistent storage. If any part of this 
-    fails, you should roll the data back to its previous state.
+    fails, you should roll the data back to its previous state of being encrypted with the old context.
  
     @param  reEncryptor A function that will perform re-encryption on one data value, e.g. a single field in a database.
     @return             Promise resolving to true if you completed all re-encryption without failure, false if not. 
                         In the latter case, roll back any changes to persistent storage avoid bricking user data. */
-interface IReEncryptCallback { (reEncryptor:IReEncryptFunction):Promise<boolean>; }
+interface IReEncryptCallback { (oldContext:WearContext, newContext:WearContext):Promise<boolean>; }
 
 /** Returns a context derived from new credentials and calls a specified callback that will perform re-encryption.
     The function's logic is meant as a safeguard to avoid bricking user data when credentials change. If app code 
@@ -74,8 +51,7 @@ export async function changeCredentialsAndReEncrypt(oldContext:WearContext, newU
   const newContext = new WearContext(newCredentialKey);
   const newCredentialProof = await generateCredentialProof(newCredentialKey);
   
-  const _reEncrypt = createReEncryptor(oldContext, newContext);
-  if (!await onReEncrypt(_reEncrypt)) throw Error('Re-encryption failed. The current context has not been changed.');  
+  if (!await onReEncrypt(oldContext, newContext)) throw Error('Re-encryption failed. The current context has not been changed.');  
   
   oldContext.clear();
   setCredentialProof(newCredentialProof);
@@ -109,25 +85,63 @@ export function close(context:WearContext):void {
   context.clear();
 }
 
-/** Returns encrypted app data that you can use for writing to persistent storage.
-   
-    @param context        From a previous call to open().
-    @param value          Nearly any JS type should work. The serialization is essentially JSON.stringify().
-    @return               Promise resolving to Byte array of encrypted data. */
-export async function encrypt(context:WearContext, value:any):Promise<Uint8Array> {
+/** Encrypts byte array to a string that you can use for writing to persistent storage.
+
+ @param context        From a previous call to open().
+ @param bytes          Value to encrypt.
+ @return               Promise resolving to base64-encoded string of encrypted data. */
+export async function encryptBytes(context:WearContext, bytes:Uint8Array):Promise<string> {
   if (context.isClear()) throw Error('Attempted to use a closed context.');
-  const credentialKey = (await context.dangerouslyGetKey()) as CryptoKey;
-  return await encryptAppData(credentialKey, value);
+  const credentialKey = context.dangerouslyGetKey() as CryptoKey;
+  return bytesToBase64(await encryptAppData(credentialKey, bytes));
 }
 
-/** Returns decrypted app data that you can keep in memory for the app to use.
-   
-    @param context        From a previous call to open(). The credentials that generated the context must match 
-                         credentials provided earlier in session where encryptedData was encrypted.
-    @param encryptedData  Byte array of encrypted data..
-    @return               Promise resolving to Unencrypted data. */
-export async function decrypt(context:WearContext, encryptedData:Uint8Array):Promise<any> {
+/** Decrypts string to a byte array.
+
+ @param context        From a previous call to open(). The credentials that generated the context must match
+ credentials provided earlier in session where encryptedData was encrypted.
+ @param encryptedData  Must have been generated with a previous call to `encryptBytes()`.
+ @return               Promise resolving to Unencrypted data. */
+export async function decryptBytes(context:WearContext, encryptedData:string):Promise<Uint8Array>{
   if ((context as any).isClear()) throw Error('Attempted to use a closed context.');
-  const credentialKey = (await context.dangerouslyGetKey()) as CryptoKey;
-  return await decryptAppData(credentialKey, encryptedData);
+  const credentialKey = context.dangerouslyGetKey() as CryptoKey;
+  const ciphertextBytes = base64ToBytes(encryptedData);
+  return await decryptAppData(credentialKey, ciphertextBytes);
+}
+
+/** Encrypts object to a ciphertext string that you can use for writing to persistent storage.
+ 
+ If the object is not entirely representable in JSON, you'll need to pass a replacer function to handle
+ serialization, and pass a reviver function later to `decryptObject()` to symmetrically perform deserialization.
+ To understand if your object is JSON-representable, call `JSON.parse(JSON.stringify(yourObject))` and see if it
+ returns the same `yourObject` value.
+ 
+ WEaR adds support for (de)serializing the following primitive values: null, undefined, Infinity, -Infinity, and NaN.
+
+ @param context        From a previous call to open().
+ @param object         Value to encrypt.
+ @param replacer       Optional function to serialize values correctly. See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#the_replacer_parameter
+ @return               Promise resolving to ciphertext string. */
+export async function encryptObject(context:WearContext, object:any, replacer?:IReplacer):Promise<string> {
+  const plainTextBytes = anyToBytes(object, replacer);
+  return await encryptBytes(context, plainTextBytes);
+}
+
+/** Decrypts ciphertext string to an object.
+ 
+ If the object is not entirely representable in JSON, you'll need to pass a reviver function to handle
+ deserialization that matches a replacer function previously passed to `encryptObject()` for the same data.
+ To understand if your object is JSON-representable, call `JSON.parse(JSON.stringify(yourObject))` and see if it
+ returns the same `yourObject` value.
+
+ WEaR adds support for (de)serializing the following primitive values: null, undefined, Infinity, -Infinity, and NaN.
+
+ @param context        From a previous call to open(). The credentials that generated the context must match
+ credentials provided earlier in session where encryptedData was encrypted.
+ @param encryptedData  Must have been generated with a previous call to `encryptObject()`.
+ @param reviver        Optional function to deserialize values correctly. See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse#using_the_reviver_parameter 
+ @return               Promise resolving to Unencrypted data. */
+export async function decryptObject(context:WearContext, encryptedData:string, reviver?:IReviver):Promise<any>{
+  const plainTextBytes = await decryptBytes(context, encryptedData);
+  return bytesToAny(plainTextBytes, reviver);
 }

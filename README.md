@@ -51,11 +51,11 @@ The code below shows a minimal set of code to request credentials from a user, r
     const { userName, password } = promptForCredentials(isNewAccount);
     const context = open(userName, password);
     
-    const currentEncryptedData = localStorage.getItem('YOUR_SENSITIVE_DATA') ?? '';
-    const currentData = await decrypt(context, currentEncryptedData);
-    const updatedData = prompt('Update sensitive data:', sensitiveData);
-    if (updatedData !== currentData) {
-      const updatedEncryptedData = await encrypt(context, updatedData);
+    const currentEncryptedData = localStorage.getItem('YOUR_SENSITIVE_DATA') ?? {text:''};
+    const currentData = await decryptObject(context, currentEncryptedData);
+    const text = prompt('Update sensitive data:', currentData.text);
+    if (text !== currentData.text) {
+      const updatedEncryptedData = await encryptObject(context, {text});
       localStorage.setItem('YOUR_SENSITIVE_DATA', updatedEncryptedData);
     }
     close(context);
@@ -64,7 +64,7 @@ The code below shows a minimal set of code to request credentials from a user, r
   updateYourSensitiveData();
 ```
 
-An unnatural aspect of the previous code example is how all the calls to WEaR APIs are together. You'd more likely call `open()` around a login UI, and then immediately load all encrypted data into an in-memory store with multiple calls to `decrypt()`. Then later, when a user changes data within the app, pass the changed data to `encrypt()` and write the new encrypted value to persistent storage. Finally, when the user logs out, call `close()` on the context returned earlier to increase security on the user's workstation.
+An unnatural aspect of the previous code example is how all the calls to WEaR APIs are together. You'd more likely call `open()` around a login UI, and then immediately load all encrypted data into an in-memory store with multiple calls to `decryptObject()`. Then later, when a user changes data within the app, pass the changed data to `encryptObject()` and write the new encrypted value to persistent storage. Finally, when the user logs out, call `close()` on the context returned earlier to increase security on the user's workstation.
 
 Each of these use cases and more will be explained below.
 
@@ -117,14 +117,14 @@ When the user logs out, call `close()` on the context instance to prevent an att
 
 ### Writing Encrypted Data
 
-You will encrypt sensitive data before storing it on disk or other persistent storage. When your web app needs to store sensitive data, call `encrypt()` on the plaintext value and store the returned ciphertext to persistent storage, e.g. an IndexedDb store.
+You will encrypt sensitive data before storing it on disk or other persistent storage. When your web app needs to store sensitive data, call `encryptObject()` on the plaintext value and store the returned ciphertext to persistent storage, e.g. an IndexedDb store.
 
 ```javascript
   import { encrypt } from 'web-enc-at-rest';
   ...
 
   const invoice = { amount:250.43, created:'1/1/23', due:'2/1/23' };
-  const encryptedInvoice = await encrypt(context, invoice);
+  const encryptedInvoice = await encryptObject(context, invoice);
   localStorage.setItem('lastInvoice', encryptedInvoice);
 ```
 
@@ -132,13 +132,13 @@ You need not use `localStorage` in for persisting user data. It's just easier to
 
 ### Reading Encrypted Data
 
-When your web app needs to retrieve and use encrypted data from persistent storage, retrieve the data through your own implementation, and then call `decrypt()` to return the original plaintext value.
+When your web app needs to retrieve and use encrypted data from persistent storage, retrieve the data through your own implementation, and then call `decryptObject()` to return the original plaintext value.
 
 ```javascript
   import { decrypt } from 'web-enc-at-rest';
   ...
   const encryptedInvoice = localStorage.getItem('lastInvoice');
-  const invoice = await decrypt(context, encryptedInvoice);
+  const invoice = await decryptObject(context, encryptedInvoice);
 ```
 
 ### Changing Password or Username
@@ -149,10 +149,11 @@ You need to re-encrypt your app data with the new credentials. If you don't, the
   import { changeCredentialsAndReEncrypt } from 'web-enc-at-rest';
   ...
 
-  async function onReEncrypt(reEncryptFunc) {
+  async function onReEncrypt(oldContext, newContext) {
     try {
       const encryptedInvoice = localStorage.getItem('lastInvoice');
-      const reEncryptedInvoice = await reEncryptFunc(encryptedInvoice);
+      const decryptedInvoice = await decryptObject(oldContext, encryptedInvoice);
+      const reEncryptedInvoice = await encryptObject(newContext, decryptedInvoice);
       localStorage.setItem('lastInvoice', reEncryptedInvoice);    
       return true;
     } catch(e) {

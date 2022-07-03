@@ -3,7 +3,6 @@ import { randomBytes } from "./randomUtil";
 import { stringToBytes } from "./dataConvertUtil";
 import {getCredentialProof, getDeriveKeySalt, setCredentialProof, setDeriveKeySalt} from "./keyGenStore";
 import {areUint8ArraysEqual} from "./arrayUtil";
-import {encrypt} from "./index";
 import {encryptAppData} from "./appDataEncryption";
 
 const PBKDF2_SALT_BYTE_LENGTH = 16;
