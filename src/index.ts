@@ -1,4 +1,4 @@
-/** @module API **/
+/** @module WEaR API **/
 
 import {generateCredentialKey, generateCredentialProof, matchOrCreateCredentialProof} from "./keyGen";
 import {decryptAppData, encryptAppData} from "./appDataEncryption";
