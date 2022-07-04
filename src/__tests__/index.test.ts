@@ -26,7 +26,7 @@ describe('API', () => {
     it('returns a context', (done) => {
       open('bubba', 'unguessable')
       .then((context:WearContext|null) => {
-        expect(context).toBeDefined();
+        expect(context).not.toBeNull();
         done();
       });
     });
@@ -52,6 +52,16 @@ describe('API', () => {
         return open('bubba', 'badguess');
       }).then((context2:WearContext|null) => {
         expect(context2).toBeDefined();
+        done();
+      });
+    });
+    
+    it('opens with same credentials as used on a prior call', (done) => {
+      open('bubba', 'unguessable')
+      .then(() => {
+        return open('bubba', 'unguessable');
+      }).then((context:WearContext|null) => {
+        expect(context).not.toBeNull();
         done();
       });
     });
@@ -126,6 +136,19 @@ describe('API', () => {
         done();
       });
     });
+    
+    it('encrypts the same value uniquely in two calls', (done) => {
+      const value = { a:3, b:['apple', 95], c:{x:85} };
+      let firstCiphertext:string;
+      encryptObject(context, value)
+      .then((encrypted) => {
+        firstCiphertext = encrypted;
+        return encryptObject(context, value);
+      }).then((secondCiphertext) => {
+        expect(firstCiphertext).not.toEqual(secondCiphertext);
+        done();
+      });
+    });
   });
 
   describe('decryptObject()', () => {
@@ -184,6 +207,19 @@ describe('API', () => {
         }, () => {
           done();
         });
+    });
+
+    it('encrypts the same value uniquely in two calls', (done) => {
+      const value = new Uint8Array([0,1,2,3,4,5,6]);
+      let firstCiphertext:string;
+      encryptBytes(context, value)
+        .then((encrypted) => {
+          firstCiphertext = encrypted;
+          return encryptBytes(context, value);
+        }).then((secondCiphertext) => {
+        expect(firstCiphertext).not.toEqual(secondCiphertext);
+        done();
+      });
     });
   });
 
@@ -320,9 +356,9 @@ describe('API', () => {
         return true;
       }
       changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then((newContext:WearContext) => {
-        return encryptObject(newContext, PLAINTEXT);
+        return decryptObject(newContext, newEncryptedData);
       }).then((expected:string) => {
-        expect(newEncryptedData).toEqual(expected);
+        expect(expected).toEqual(PLAINTEXT);
         done();
       })
     });

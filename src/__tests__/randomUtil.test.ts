@@ -5,6 +5,7 @@ import { randomBytes } from '../randomUtil';
 describe('randomUtil', () => {
   describe('randomBytes()', () => {
     it('throws if crypto function tampered with', () => {
+      // @ts-ignore
       global.crypto.getRandomValues = () => null;
       expect(() => randomBytes(1)).toThrow();
     })

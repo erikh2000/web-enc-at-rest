@@ -3,7 +3,7 @@ import { randomBytes } from "./randomUtil";
 import { stringToBytes } from "./dataConvertUtil";
 import {getCredentialProof, getDeriveKeySalt, setCredentialProof, setDeriveKeySalt} from "./keyGenStore";
 import {areUint8ArraysEqual} from "./arrayUtil";
-import {encryptAppData} from "./appDataEncryption";
+import {decryptAppData, encryptAppData} from "./appDataEncryption";
 
 const PBKDF2_SALT_BYTE_LENGTH = 16;
 export function getOrCreateDeriveKeySalt():Uint8Array {
@@ -44,16 +44,21 @@ function _createCredentialProofPlainText():Uint8Array {
 }
 
 const CREDENTIAL_PROOF_PLAINTEXT = _createCredentialProofPlainText();
-export async function generateCredentialProof(credentialKey:CryptoKey) {
+export async function generateCredentialProof(credentialKey:CryptoKey):Promise<Uint8Array> {
   return encryptAppData(credentialKey, CREDENTIAL_PROOF_PLAINTEXT);
 }
 
-export async function matchOrCreateCredentialProof(credentialKey:CryptoKey) {
-  const credentialProof = await generateCredentialProof(credentialKey);
-  const against = getCredentialProof();
-  if (against === null) {
-    setCredentialProof(credentialProof);
+export async function matchOrCreateCredentialProof(credentialKey:CryptoKey):Promise<boolean> {
+  const credentialProof = getCredentialProof();
+  if (credentialProof === null) {
+    const newCredentialProof = await generateCredentialProof(credentialKey);
+    setCredentialProof(newCredentialProof);
     return true;
   }
-  return areUint8ArraysEqual(credentialProof, against);
+  try {
+    const credentialProofPlaintext = await decryptAppData(credentialKey, credentialProof);
+    return areUint8ArraysEqual(credentialProofPlaintext, CREDENTIAL_PROOF_PLAINTEXT);
+  } catch(ignored) { // If credentials are incorrect, decrypt will fail.
+    return false;
+  }
 }

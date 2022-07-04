@@ -5,10 +5,12 @@
 const { subtle } = require('node:crypto').webcrypto;
 
 // For consistent test results, it's better to return a not-random value.
+let randomSeed = 0;
 function getRandomValues(array:Uint8Array) {
   for(let i = 0; i < array.length; ++i) {
-    array[i] = i % 256;
+    array[i] = (i + randomSeed) % 256;
   }
+  ++randomSeed;
   return array; 
 }
 
@@ -48,6 +50,9 @@ function _mock() {
   };
 }
 
-export function restoreMock() { _mock(); }
+export function restoreMock() { 
+  _mock();
+  randomSeed = 0;
+}
 
 _mock();
