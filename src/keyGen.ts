@@ -50,12 +50,12 @@ export async function generateCredentialProof(credentialKey:CryptoKey):Promise<U
 
 export async function matchOrCreateCredentialProof(credentialKey:CryptoKey):Promise<boolean> {
   const credentialProof = getCredentialProof();
-  if (credentialProof === null) {
+  if (credentialProof === null) { // Store new proof if there isn't already one.
     const newCredentialProof = await generateCredentialProof(credentialKey);
     setCredentialProof(newCredentialProof);
     return true;
   }
-  try {
+  try { // Otherwise, need to verify the proof value can be decrypted.
     const credentialProofPlaintext = await decryptAppData(credentialKey, credentialProof);
     return areUint8ArraysEqual(credentialProofPlaintext, CREDENTIAL_PROOF_PLAINTEXT);
   } catch(ignored) { // If credentials are incorrect, decrypt will fail.
