@@ -4,9 +4,9 @@
   "description": "Example web app showing WEaR usage.",
   "private": true,
   "scripts": {
-    "watch": "webpack --config webpack.config.js",
-    "build": "webpack --config webpack-build.config.js",
-    "http": "http-server -o ./dist -c-1",
+    "watch": "webpack --watch",
+    "build": "webpack",
+    "http": "http-server -o ./ -c-1",
     "start": "npm run build && npm run http"
   },
   "author": "Erik Hermansen",

@@ -1,0 +1,106 @@
+.hidden {
+    display: none;
+}
+
+.panel {
+    padding: 2rem;
+    background-color: #ffccea;
+    border-radius: 2rem;
+    border-color: #b4548c;
+    border-width: thick;
+    border-style: solid;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 60rem;
+}
+
+#statusMessage {
+    font-size: x-large;
+    margin: 1rem;
+    text-align: center;
+    width: 100%;
+}
+
+.panel button {
+    padding: 0.8rem;
+    margin: 0.3rem;
+    font-size: large;
+    cursor: pointer;
+    background-color: #f6d6ea;
+}
+
+.panel form {
+    padding-bottom: 1rem;
+    width: 100%;
+    margin: 1rem auto 1rem;
+    background-color: #fde9f5;
+    padding-top: 1rem;
+    border-radius: 2rem;
+}
+
+.panel fieldset {
+    border-style: none;
+}
+
+.panel input {
+    width: 80%;
+}
+
+.panel label {
+    display: inline-block;
+    width: 30%;
+    text-align: right;
+    vertical-align: top;
+}
+
+.panel label+input {
+    width: 30%;
+    margin: 0 30% .2rem 4%;
+    font-size: large;
+}
+
+.panel textarea {
+    width: 30%;
+    height: 10rem;
+    margin: 0 30% 0.2rem 4%;
+    font-size: large;
+}
+
+#header {
+    width: 100%;
+    margin-top: .3rem;
+    text-align: center;
+}
+
+#header h1 {
+    text-align: center;
+    margin-left: 2rem;
+    margin-right: 2rem;
+    font-size: 2.5rem;
+    color: #ddd;
+    display:inline;
+    width: 100%;
+}
+
+/* Thank you, Marta Simon for creating the Unicorn illustration and placing it in the public domain! 
+   https://pixabay.com/users/arousalandpublicdomain-7400657/ */
+.unicornLeft {
+    width: 2.5rem;
+    height: 2.5rem;
+    background-image: url('unicorn-pd-from-pixabay.png');
+    background-size: cover;
+    display: inline-block;
+}
+
+.unicornRight {
+    width: 2.5rem;
+    height: 2.5rem;
+    background-image: url('unicorn-pd-from-pixabay.png');
+    background-size: cover;
+    display: inline-block;
+    transform: scaleX(-1);
+}
+
+body {
+    text-align: center;
+}

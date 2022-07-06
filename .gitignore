@@ -5,6 +5,7 @@
 # dist directories
 dist
 docs/dist
+example/public/main.js
 
 #
 # General-Purpose Exclusions

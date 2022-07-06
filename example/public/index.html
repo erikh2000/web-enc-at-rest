@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>WEaR Example</title>
+    <link rel="stylesheet" type="text/css" href="./normalize.css" />
+    <link rel="stylesheet" type="text/css" href="./index.css" />
+</head>
+<body>
+    <div id="header">
+        <div class="unicornLeft"></div><div class="unicornLeft"></div><div class="unicornLeft"></div>
+        <h1>Precious Secrets</h1>
+        <div class="unicornRight"></div><div class="unicornRight"></div><div class="unicornRight"></div>
+    </div>
+
+    <div id="loginPanel" class="panel hidden">
+        <h2>Welcome Back!</h2>
+        <p>Is it truly you? You'll need to prove it. Precious secrets must be protected.</p>
+        <form onsubmit="return false">
+            <fieldset>
+                <label for="loginUserName">User Name:</label>
+                <input type="text" id="loginUserName" autocomplete="username" />
+                <label for="loginPassword">Password:</label>
+                <input type="password" id="loginPassword" autocomplete="current-password" />
+            </fieldset>
+            <footer>
+                <button id="forgotButton" type="button">I Forgot My Credentials!</button>
+                <button id="loginButton" type="submit">Unlock Secrets</button>
+            </footer>
+        </form>
+    </div>
+    
+    <div id="forgotPanel" class="panel hidden">
+        <h2>Oh nooOooooOooOooo!</h2>
+        <p>I can reset your account so that you can create a new one. But do you know what that means? <strong>Your precious secrets will be lost forever!</strong> I don't mean to be unkind, but it must be that way.</p>
+        <h3>Are you ready to destroy your precious secrets?</h3>
+        <button id="resetButton" type="button">Sigh... Yes</button>
+        <button id="resetCancelButton" type="button">No!</button>
+    </div>
+    
+    <div id="createAccountPanel" class="panel hidden">
+        <h2>Create Account</h2>
+        <p>You've got more secrets than Laura Palmer? You've come to the right place!</p>
+        <form onsubmit="return false">
+            <fieldset>
+                <label for="createAccountUserName">User Name:</label>
+                <input type="text" id="createAccountUserName" autocomplete="username" />
+                <label for="createAccountPassword">Password:</label>
+                <input type="password" id="createAccountPassword" autocomplete="new-password" />
+                <label for="createAccountPassword2">Confirm:</label>
+                <input type="password" id="createAccountPassword2" autocomplete="new-password" />
+            </fieldset>
+            <footer>
+                <button id="createAccountButton" type="submit">Create</button>
+            </footer>
+        </form>
+    </div>
+    
+    <div id="changePasswordPanel" class="panel hidden">
+        <h2>Change password</h2>
+        <p>Changing your password will also re-encrypt your precious secrets.</p>
+        <form onsubmit="return false">
+            <fieldset>
+                <input hidden type="text" id="oldUsername" class="hidden" autocomplete="username" />
+                <label for="oldPassword">Old Password:</label>
+                <input type="password" id="oldPassword" autocomplete="current-password" />
+                <label for="newPassword">New Password:</label>
+                <input type="password" id="newPassword" autocomplete="new-password"/>
+                <label for="newPassword2">Confirm:</label>
+                <input type="password" id="newPassword2" autocomplete="new-password"/>
+            </fieldset>
+            <footer>
+                <button id="cancelChangePasswordButton" type="button">Cancel</button>
+                <button id="confirmChangePasswordButton" type="submit">Confirm Change</button>
+            </footer>
+        </form>
+    </div>
+    
+    <div id="postLoginPanel" class="panel hidden">
+        <h2>Secrets Unlocked</h2>
+        <p>Here you can safely manage your precious secrets, whether they be controversial eugenics theories or which boy in your class is the cutest.</p>
+        <form onsubmit="return false">
+            <fieldset>
+                <label for="preciousSecretsText">Secrets:</label>
+                <textarea id="preciousSecretsText"></textarea>
+            </fieldset>
+            <footer>
+                <button id="changePasswordButton" type="button">Change Password</button>
+                <button id="lockButton" type="submit">Save and Lock</button>
+            </footer>
+        </form>
+    </div>
+
+    <div id="statusMessage"></div>
+    
+    <script src="main.js"></script>
+</body>
+</html>

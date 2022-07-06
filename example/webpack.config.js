@@ -6,16 +6,15 @@ module.exports = {
   module: {
     rules: [{
       test: /\.(js)$/,
-      exclude: [/node_modules/, /dist/],
+      exclude: [/node_modules/, /public/],
       use: ['babel-loader']
     }]
   },
   output: {
     filename: 'main.js',
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'public'),
   },
   resolve: {
     extensions: ['*', '.js']
-  },
-  watch: true
+  }
 };
