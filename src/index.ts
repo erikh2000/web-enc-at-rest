@@ -5,6 +5,10 @@ import WearContext from "./WearContext";
 import {anyToBytes, bytesToAny, IReplacer, IReviver} from "./dataConvertUtil";
 import {base64ToBytes, bytesToBase64} from "./base64Util";
 
+function _productionUseWarning() {
+  console.warn('WEaR is in a peer review period. Production use is not recommended for any WEaR package version < 1.0.0.');
+}
+
 /** Checks to see if a context was previously opened via open(). This can be useful
  *  to present appropriate UI in the app for either request existing credentials (e.g. "log in") or
  *  accept new credentials (e.g. "create account").
@@ -85,7 +89,7 @@ export async function changeCredentialsAndReEncrypt(oldContext:WearContext, newU
  *  @returns {Promise<WearContext>} Promise resolving to context that can be passed to other APIs. Treat this opaquely. 
  *                                  DO NOT store in any place but memory. */
 export async function open(userName:string, password:string):Promise<WearContext | null> {
-  console.warn('WEaR is in a peer review period. Production use is not recommended for any WEaR package version < 1.0.0.');
+  _productionUseWarning();
   const credentialKey = await generateCredentialKey(userName, password);
   if (!await matchOrCreateCredentialProof(credentialKey)) return null;
   return new WearContext(credentialKey);

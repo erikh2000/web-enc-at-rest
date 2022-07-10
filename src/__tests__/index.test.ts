@@ -20,6 +20,7 @@ describe('API', () => {
   beforeEach(() => {
     restoreCryptoMock();
     restoreLocalStorageMock();
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
   
   describe('open()', () => {
