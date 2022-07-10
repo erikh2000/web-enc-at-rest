@@ -85,6 +85,7 @@ export async function changeCredentialsAndReEncrypt(oldContext:WearContext, newU
  *  @returns {Promise<WearContext>} Promise resolving to context that can be passed to other APIs. Treat this opaquely. 
  *                                  DO NOT store in any place but memory. */
 export async function open(userName:string, password:string):Promise<WearContext | null> {
+  console.warn('WEaR is in a peer review period. Production use is not recommended for any WEaR package version < 1.0.0.');
   const credentialKey = await generateCredentialKey(userName, password);
   if (!await matchOrCreateCredentialProof(credentialKey)) return null;
   return new WearContext(credentialKey);

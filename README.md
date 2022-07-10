@@ -30,7 +30,7 @@ Performance is a consideration, but any potential improvement to performance tha
 
 ## Usage
 
-All the APIs are found in /src/index.ts with documentation around their usage. But I'll describe the use cases your web app will need to support for encryption-at-rest and how to handle them.
+All the APIs are found in /src/index.ts with documentation around their usage, which you can also access from the [WEaR API Reference on my website](https://seespacelabs.com/wear-api-reference/). But I'll describe the use cases your web app will need to support for encryption-at-rest and how to handle them.
 
 ### Quick Example
 
@@ -166,6 +166,10 @@ You need to re-encrypt your app data with the new credentials. If you don't, the
   context = await changeCredentialsAndReEncrypt(context, newUserName, newPassword, onReEncrypt); 
   
 ```
+
+### Additional API Info ###
+
+All APIs are documented in the [WEaR API Reference](https://seespacelabs.com/wear-api-reference/)
 
 ### Protecting Against Supply Chain Attacks
 
