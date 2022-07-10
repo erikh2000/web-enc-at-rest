@@ -5,6 +5,20 @@ import {getCredentialProof, getDeriveKeySalt, setCredentialProof, setDeriveKeySa
 import {areUint8ArraysEqual} from "./arrayUtil";
 import {decryptAppData, encryptAppData} from "./appDataEncryption";
 
+/** Explanation of salt reuse:
+ 
+ The salt returned by getOrCreateDeriveKeySalt() is used along with credentials to derive a key. It's nearly always true 
+ in cryptographic use cases that you would want to use a new salt value every time a value is encrypted. But in this 
+ use case, we want the same credentials to consistently derive the same key across multiple derivations. Otherwise, 
+ the key will always be a new key that is unusable for decrypting previously-encrypted app data.
+ 
+ The derived key is only kept in-memory, which limits an attacker's ability to compare the derived key value against a
+ matching value that could reveal credentials. An attacker could gain access to browser memory, e.g. the browser
+ executable is patched with malware. But in this case, other attack vectors of greater opportunity will be available to
+ the attacker.
+ 
+ The app data itself is encrypted without reuse of salt/IV values.
+ */
 const PBKDF2_SALT_BYTE_LENGTH = 16;
 export function getOrCreateDeriveKeySalt():Uint8Array {
   let deriveKeySalt = getDeriveKeySalt();
