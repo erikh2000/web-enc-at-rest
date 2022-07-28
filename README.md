@@ -16,7 +16,6 @@ WARNING: This library is in a period of peer review. I do not recommend it for p
   * APIs are designed to limit opportunities for misuse
   * 100% test coverage with integration tests that use cryptographic functionality rather than mocks
   * Zero run-time dependencies (other than the browser-provided native APIs) to reduce risk of supply-chain attacks
-  * Tamper check on Web Crypto functions further lowers risk of supply-chain attacks
 * _Lightweight_
   * Features are minimal to what is needed for encryption-at-rest use cases. You can build beyond this within your app
   * Any features beyond the above will be offered in separate, optional NPM packages
@@ -173,15 +172,7 @@ All APIs are documented in the [WEaR API Reference](https://seespacelabs.com/wea
 
 ### Protecting Against Supply Chain Attacks
 
-It is possible for some code in an imported dependency or transitive dependency to swap out built-in functions in the JS execution environment. To protect against this, you can import WEaR before any other imports. Put the import ahead of all others, or as close to first as you can manage. When the module imports, it takes a snapshot of "trusted" functions to compare against later for tampering. You want that snapshot to happen before a malicious 3rd-party module changes the functions.
-
-```javascript
-  import 'web-enc-at-rest'; // This import should precede all others.
-  import { perfectlySafeFunction } from 'happycolorsforeverybody';
-  import { innocentFunction } from 'very-popular-logging-library';
-```
-
-This will not protect against every possible supply chain attack. Some other precautions you may want to take:
+It is possible for some code in an imported dependency or transitive dependency to swap out built-in functions in the JS execution environment. For example, the Web Crypto `encrypt()` function could be replaced with a function that returns plaintext instead of ciphertext. Some other precautions you may want to take:
 
 * address vulnerabilities with `npm audit`.
 * put your build-time-only dependencies (test frameworks, linting, etc.) under `devDependencies` in `package.json`, so that `npm audit` will be more meaningful when it complains about vulnerabilities under the `dependencies` section.
