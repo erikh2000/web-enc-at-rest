@@ -6,7 +6,7 @@ WEaR's API is decidedly *just* a library rather than a framework. How you store 
 
 WEaR can also be used as an offline-only means of authentication for a single user on one browser. So if you want to authenticate users before allowing access to sensitive data without relying on an authentication web service, WeAR may be a good solution.
 
-WARNING: This library is in a period of peer review. I do not recommend it for production use until the peer review has completed, at which point, I will remove this warning and set the package version number to 1.*.
+UPDATE: The library is now ready for production use after receiving a favorable security audit. 
 
 ## Design and Maintenance Goals
 
@@ -16,6 +16,7 @@ WARNING: This library is in a period of peer review. I do not recommend it for p
   * APIs are designed to limit opportunities for misuse
   * 100% test coverage with integration tests that use cryptographic functionality rather than mocks
   * Zero run-time dependencies (other than the browser-provided native APIs) to reduce risk of supply-chain attacks
+  * Independently audited by security experts. See "audit history" section below.
 * _Lightweight_
   * Features are minimal to what is needed for encryption-at-rest use cases. You can build beyond this within your app
   * Any features beyond the above will be offered in separate, optional NPM packages
@@ -232,6 +233,12 @@ If you want to enable multiple-device authentication, you almost certainly want 
 ### One-Browser/Multiple-Users Probably Won't Ever Be Supported
 
 WEaR is intentionally limited to support just one user account per browser instance. I figure that if you care enough about your users' app data to encrypt it, then you won't want the additional attack vectors that a "hot seat" style of web app adds. Note that a device that allows for multiple users via O/S-level log in will give you per-user data provisioning, e.g. launching Chrome after switching to a different O/S user account, will show browser data (bookmarks, downloads, localStorage, IndexedDb) for the second user instead of the first.
+
+### Audit History
+
+You can find security audits in the `/audits` folder of the Git repository.
+
+* July 2022 - Cure53 Review & Crypto-Audit Report WEaR Library 07.2022
 
 ### Contact Info
 

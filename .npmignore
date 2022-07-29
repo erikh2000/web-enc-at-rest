@@ -1,7 +1,9 @@
+.DS_Store
 .eslintignore
 .eslintrc
 .idea
 .nyc_output
+audits
 babel.config.js
 coverage
 docs
