@@ -1,7 +1,10 @@
 import { bytesToBase64, base64ToBytes } from "../base64Util";
+import { restoreMock } from "../__mocks__/mockBase64";
 
 // Full tests.
 describe('base64Util', () => {
+  beforeEach(() => { restoreMock() });
+  
   describe('bytesToBase64() and base64ToBytes()', () => {
     function _checkEncodeDecode(bytes:Uint8Array) {
       const base64 = bytesToBase64(bytes);

@@ -1,5 +1,7 @@
 import { restoreMock as restoreCryptoMock } from '../__mocks__/mockCrypto';
 import { restoreMock as restoreLocalStorageMock } from '../__mocks__/mockLocalStorage';
+import { restoreMock as restoreBase64 } from '../__mocks__/mockBase64';
+
 import {
   changeCredentialsAndReEncrypt,
   close,
@@ -20,6 +22,7 @@ describe('API', () => {
   beforeEach(() => {
     restoreCryptoMock();
     restoreLocalStorageMock();
+    restoreBase64();
     jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
   
