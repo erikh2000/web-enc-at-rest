@@ -324,7 +324,7 @@ describe('API', () => {
     
     it('throws without re-encrypting if old context is closed', (done) => {
       close(oldContext);
-      async function onReEncrypt(oldContext2:WearContext, newContext:WearContext):Promise<boolean> {
+      async function onReEncrypt(oldContext2:WearContext, _:WearContext):Promise<boolean> {
         expect(true).toBeFalsy(); // Execution should not arrive here.
         return true;
       }
@@ -335,7 +335,7 @@ describe('API', () => {
     });
     
     it('throws if re-encryption callback returns false', (done) => {
-      async function onReEncrypt(oldContext2:WearContext, newContext:WearContext):Promise<boolean> { return false; }
+      async function onReEncrypt(_oldContext:WearContext, _newContext:WearContext):Promise<boolean> { return false; }
       changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then(
         () => { expect(true).toBeFalsy(); }, // Execution should not arrive here.
         () => { done(); }
@@ -343,7 +343,7 @@ describe('API', () => {
     });
 
     it('leaves old context open if re-encryption callback returns false', (done) => {
-      async function onReEncrypt(oldContext2:WearContext, newContext:WearContext):Promise<boolean> { return false; }
+      async function onReEncrypt(_oldContext:WearContext, _newContext:WearContext):Promise<boolean> { return false; }
       changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then(
         () => { expect(true).toBeFalsy(); }, // Execution should not arrive here.
         () => {
@@ -368,16 +368,16 @@ describe('API', () => {
     });
 
     it('closes old context after successful return', (done) => {
-      async function onReEncrypt(oldContext2:WearContext, newContext:WearContext):Promise<boolean> { return true; }
-      changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then((newContext:WearContext) => {
+      async function onReEncrypt(_oldContext2:WearContext, _newContext:WearContext):Promise<boolean> { return true; }
+      changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then((_newContext:WearContext) => {
         expect(oldContext.isClear());
         done();
       });
     });
     
     it('causes old credentials to not open after successful return', (done) => {
-      async function onReEncrypt(oldContext2:WearContext, newContext:WearContext):Promise<boolean> { return true; }
-      changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then((newContext:WearContext) => {
+      async function onReEncrypt(_oldContext:WearContext, _newContext:WearContext):Promise<boolean> { return true; }
+      changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then((_newContext2:WearContext) => {
         return open(OLD_USERNAME, OLD_PW);
       }).then((attemptOldContext:WearContext|null) => {
         expect(attemptOldContext).toBeNull();
@@ -386,8 +386,8 @@ describe('API', () => {
     });
 
     it('causes new credentials to open after successful return', (done) => {
-      async function onReEncrypt(oldContext2:WearContext, newContext:WearContext):Promise<boolean> { return true; }
-      changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then((newContext:WearContext) => {
+      async function onReEncrypt(_oldContext:WearContext, _newContext:WearContext):Promise<boolean> { return true; }
+      changeCredentialsAndReEncrypt(oldContext, NEW_USERNAME, NEW_PW, onReEncrypt).then((_newContext2:WearContext) => {
         return open(NEW_USERNAME, NEW_PW);
       }).then((attemptNewContext:WearContext|null) => {
         expect(attemptNewContext).not.toBeNull();

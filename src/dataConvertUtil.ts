@@ -8,7 +8,11 @@ export function bytesToString(utf8Array:Uint8Array):string {
   return textDecoder.decode(utf8Array);
 }
 
-//  = an escaping prefix that is very unlikely to be part of the passed in data.
+/* The purpose of the replacement table is to fix some primitive values that otherwise would not survive JSON.stringify(JSON.parse()) (de)serialization.
+   I would love to include "undefined" below too, but on the JSON.parse() execution, an "undefined" value will always omit the the variable from 
+   the parse. You could avoid serializing variables with undefined values, e.g. { x:undefined }. Or you could use (de)serialization other than JSON.*.
+   
+    = an escaping prefix that is very unlikely to be part of the passed in data. */
 const replacementTable = [
   [Infinity, 'infinity'],
   [-Infinity, '-infinity'],
