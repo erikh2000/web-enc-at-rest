@@ -7,7 +7,7 @@ import {decryptAppData, encryptAppData} from "./appDataEncryption";
 
 /** Explanation of salt reuse:
  
- The salt returned by getOrCreateDeriveKeySalt() is used along with credentials to derive a key. It's nearly always true 
+ The salt returned by getOrCreateDeriveKeySalt() is used along with the password to derive a key. It's nearly always true 
  in cryptographic use cases that you would want to use a new salt value every time a value is encrypted. But in this 
  use case, we want the same credentials to consistently derive the same key across multiple derivations. Otherwise, 
  the key will always be a new key that is unusable for decrypting previously-encrypted app data.
@@ -29,15 +29,19 @@ export function getOrCreateDeriveKeySalt():Uint8Array {
   return deriveKeySalt;
 }
 
-function _concatPassphraseFromCredentials(userName:string, password:string):string {
-  return `${userName}\u0000${password}`;
+function _addUserNameToSalt(userName:string, salt:Uint8Array) {
+  let saltI = 0, saltLength = salt.length;
+  for(let i = 0; i < userName.length; ++i) {
+    salt[saltI] = (salt[saltI] + userName.charCodeAt(i)) % 256;
+    if (++saltI === saltLength) saltI = 0;
+  }
 }
 
 const DERIVE_KEY_ITERATIONS = 100000;
 async function _generateCredentialKeyBytes(subtle:any, userName:string, password:string):Promise<Uint8Array> {
-  const passphrase = _concatPassphraseFromCredentials(userName, password);
   const salt = getOrCreateDeriveKeySalt();
-  const passphraseUint8:Uint8Array = stringToBytes(passphrase);
+  _addUserNameToSalt(userName, salt);
+  const passphraseUint8:Uint8Array = stringToBytes(password);
   const algorithmParams:Pbkdf2Params = { name: 'PBKDF2', hash: 'SHA-256', salt, iterations:DERIVE_KEY_ITERATIONS };
   const baseKey:CryptoKey = await subtle.importKey('raw', passphraseUint8, 'PBKDF2', false, ['deriveKey']);
   const derivedParams:AesKeyGenParams = { name: 'AES-GCM', length: 128 };

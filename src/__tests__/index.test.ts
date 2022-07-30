@@ -46,6 +46,19 @@ describe('API', () => {
         done();
       });
     });
+
+    it('opens when username and password are lengthy', (done) => {
+      const userName = 'bubba123456789012345678901234567890', password = 'unguessable123456789012345678901234567890';
+      open(userName, password)
+      .then((context:WearContext|null) => {
+        if (!context) { throw Error('Unexpected'); }
+        close(context);
+        return open(userName, password);
+      }).then((context2:WearContext|null) => {
+        expect(context2).toBeDefined();
+        done();
+      });
+    });
     
     it('opens with new credentials after dangerouslyDeInitialize() is called', (done) => {
       open('bubba', 'unguessable')
