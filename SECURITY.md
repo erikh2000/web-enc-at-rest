@@ -2,9 +2,7 @@
 
 ## Supported Versions
 
-Currently, *NO* versions of the WEaR library are recommended for production use. The package is in a peer review period.
-
-However, all security vulnerability issues will be taken seriously and resolved in some way.
+Versions 1.0.0 and later are recommended for production use. All security vulnerability issues will be taken seriously and resolved in some way.
 
 ## Reporting a Vulnerability
 
