@@ -120,7 +120,7 @@ When the user logs out, call `close()` on the context instance to prevent an att
 You will encrypt sensitive data before storing it on disk or other persistent storage. When your web app needs to store sensitive data, call `encryptObject()` on the plaintext value and store the returned ciphertext to persistent storage, e.g. an IndexedDb store.
 
 ```javascript
-  import { encrypt } from 'web-enc-at-rest';
+  import { encryptObject } from 'web-enc-at-rest';
   ...
 
   const invoice = { amount:250.43, created:'1/1/23', due:'2/1/23' };
@@ -135,7 +135,7 @@ You need not use `localStorage` in for persisting user data. It's just easier to
 When your web app needs to retrieve and use encrypted data from persistent storage, retrieve the data through your own implementation, and then call `decryptObject()` to return the original plaintext value.
 
 ```javascript
-  import { decrypt } from 'web-enc-at-rest';
+  import { decryptObject } from 'web-enc-at-rest';
   ...
   const encryptedInvoice = localStorage.getItem('lastInvoice');
   const invoice = await decryptObject(context, encryptedInvoice);
