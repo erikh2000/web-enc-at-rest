@@ -7,12 +7,12 @@ describe('protectedCrypto', () => {
   
   describe('getSubtle()', () => {
     it('throws if subtle is undefined', () => {
-      (global.crypto as any).subtle = undefined;
+      (globalThis.crypto as any).subtle = undefined;
       expect(() => getSubtle()).toThrow();
     });
 
     it('throws if an expected function is undefined', () => {
-      (global.crypto as any).subtle.deriveKey = undefined;
+      (globalThis.crypto as any).subtle.deriveKey = undefined;
       expect(() => getSubtle()).toThrow();
     });
   });
